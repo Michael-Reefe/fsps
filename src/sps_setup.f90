@@ -84,12 +84,12 @@ SUBROUTINE SPS_SETUP(zin)
   spec_lambda   = 0.
   vega_spec     = 0.
   sun_spec      = 0.
-  speclib       = 0.
+  ! speclib       = 0.
   speclib_logg  = 0.
   speclib_logt  = 0.
-  agb_spec_o    = 0.
+  ! agb_spec_o    = 0.
   agb_logt_o    = 0.
-  agb_spec_c    = 0.
+  ! agb_spec_c    = 0.
   agb_logt_c    = 0.
   n_isoc        = 0
   m             = 1
@@ -241,6 +241,13 @@ SUBROUTINE SPS_SETUP(zin)
           STATUS='OLD',iostat=stat,ACTION='READ')
      OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/C3K/'//TRIM(spec_type)//'.res',&
           STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE IF (spec_type.EQ.'btsettl') THEN
+     OPEN(91,FILE=TRIM(SPS_HOME)//'/SPECTRA/BT-Settl/'//TRIM(spec_type)//'.lambda',&
+          STATUS='OLD',iostat=stat,ACTION='READ')
+     OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/BT-Settl/zlegend.dat',&
+          STATUS='OLD',iostat=stat,ACTION='READ')
+     OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/BT-Settl/'//TRIM(spec_type)//'.res',&
+          STATUS='OLD',iostat=stat,ACTION='READ')
   ENDIF
   IF (stat.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: wavelength grid cannot be opened'
@@ -297,6 +304,11 @@ SUBROUTINE SPS_SETUP(zin)
              //zstype//'.spectra.bin',FORM='UNFORMATTED',&
              STATUS='OLD',iostat=stat,ACTION='READ',access='direct',&
              recl=nspec*ndim_logg*ndim_logt*4)
+     ELSE IF (spec_type.EQ.'btsettl') THEN
+        OPEN(92,FILE=TRIM(SPS_HOME)//'/SPECTRA/BT-Settl/'//spec_type//'_z'&
+             //zstype//'.spectra.bin',FORM='UNFORMATTED',&
+             STATUS='OLD',iostat=stat,ACTION='READ',access='direct',&
+             recl=nspec*ndim_logg*ndim_logt*4)
      ENDIF
      IF (stat.NE.0) THEN
         WRITE(*,*) 'SPS_SETUP ERROR: '//spec_type//&
@@ -310,6 +322,9 @@ SUBROUTINE SPS_SETUP(zin)
   ENDDO
 
   CLOSE(93)
+
+  ALLOCATE(speclib(nspec,nz,ndim_logt,ndim_logg))
+  speclib = 0.0
 
   !interpolate the input spectral library to the isochrone grid
   !notice that we're interpolating at fixed Z/Zsol even in cases
@@ -383,6 +398,9 @@ SUBROUTINE SPS_SETUP(zin)
   ENDDO
 
   CLOSE(93)
+
+  ALLOCATE(wmb_spec(nspec,nz,ndim_wmb_logt,ndim_wmb_logg))
+  wmb_spec = 0.0
 
   !Now interpolate the input spectral library to the isochrone grid
   !notice that we're interpolating at fixed Z/Zsol even in cases
@@ -458,6 +476,10 @@ SUBROUTINE SPS_SETUP(zin)
      READ(95,*) agb_lam(i),agb_specinit_o(i,:)
   ENDDO
   CLOSE(95)
+
+  ALLOCATE(agb_spec_o(nspec,n_agb_o))  
+  agb_spec_o = 0.0
+
   !interpolate to the main spectral grid
   DO i=1,n_agb_o
      agb_spec_o(:,i) = MAX(linterparr(agb_lam,agb_specinit_o(:,i),&
@@ -476,6 +498,10 @@ SUBROUTINE SPS_SETUP(zin)
      READ(96,*) agb_lam(i),agb_specinit_c(i,:)
   ENDDO
   CLOSE(96)
+
+  ALLOCATE(agb_spec_c(nspec,n_agb_c))
+  agb_spec_c = 0.0
+
   !interpolate to the main spectral grid
   DO i=1,n_agb_c
      agb_spec_c(:,i) = MAX(linterparr(agb_lam,agb_specinit_c(:,i),&
@@ -512,6 +538,10 @@ SUBROUTINE SPS_SETUP(zin)
      READ(96,*) aringer_lam(i),aringer_specinit(i,:)
   ENDDO
   CLOSE(96)
+
+  ALLOCATE(agb_spec_car(nspec,n_agb_car))
+  agb_spec_car = 0.0
+
   !interpolate to the main spectral grid
   DO i=1,n_agb_car
      agb_spec_car(:,i) = MAX(linterparr(aringer_lam,aringer_specinit(:,i),&
@@ -560,6 +590,9 @@ SUBROUTINE SPS_SETUP(zin)
      READ(97,*) pagb_lam(i),pagb_specinit(i,:,1)
   ENDDO
   CLOSE(97)
+
+  ALLOCATE(pagb_spec(nspec,ndim_pagb,2))
+  pagb_spec = 0.0
 
   !interpolate to the main spectral array
   DO j=1,2
@@ -613,6 +646,9 @@ SUBROUTINE SPS_SETUP(zin)
   CLOSE(97)
   twrzmet = LOG10(twrzmet/zsol_spec)
 
+  ALLOCATE(wrn_spec(nspec,ndim_wr,nz))
+  wrn_spec = 0.0
+
   !interpolate to the main array
   DO j=1,nz
      i1 = MIN(MAX(locate(twrzmet,LOG10(zlegend(j)/zsol_spec)),1),SIZE(twrzmet)-1)
@@ -643,6 +679,9 @@ SUBROUTINE SPS_SETUP(zin)
   ENDDO
   CLOSE(97)
   twrzmet = LOG10(twrzmet/zsol_spec)
+
+  ALLOCATE(wrc_spec(nspec,ndim_wr,nz))
+  wrc_spec = 0.0
 
   !interpolate to the main array
   DO j=1,nz
@@ -756,6 +795,8 @@ SUBROUTINE SPS_SETUP(zin)
   !----------------------------------------------------------------!
   !--------Read in dust emission spectra from Draine & Li----------!
   !----------------------------------------------------------------!
+  ALLOCATE(dustem2_dustem(nspec,nqpah_dustem,numin_dustem*2))
+  dustem2_dustem = 0.0
 
   DO k=1,nqpah_dustem
      WRITE(sqpah,'(I1)') k-1
@@ -811,6 +852,9 @@ SUBROUTINE SPS_SETUP(zin)
   READ(99,*,IOSTAT=stat) lambda_dagb(1:nlam)
 
   lambda_dagb(1:nlam) = lambda_dagb(1:nlam)
+
+  ALLOCATE(flux_dagb(nspec,2,nteff_dagb,ntau_dagb))
+  flux_dagb = 0.0
 
   DO i=1,nteff_dagb
      DO j=1,ntau_dagb
@@ -882,6 +926,9 @@ SUBROUTINE SPS_SETUP(zin)
      READ(99,*) agndust_lam(i),agndust_specinit(i,:)
   ENDDO
 
+  ALLOCATE(agndust_spec(nspec,nagndust))
+  agndust_spec = 0.0
+
   i1 = locate(spec_lambda,agndust_lam(1))
   i2 = locate(spec_lambda,agndust_lam(nagndust_spec))
   DO i=1,nagndust
@@ -911,6 +958,10 @@ SUBROUTINE SPS_SETUP(zin)
      ENDIF
      !burn the header
      READ(99,*)
+
+     ALLOCATE(nebem_cont(nspec,nebnz,nebnage,nebnip))
+     nebem_cont = 0.0
+
      !read the wavelength array
      READ(99,*) readlambneb
      DO i=1,nebnz
@@ -964,6 +1015,9 @@ SUBROUTINE SPS_SETUP(zin)
         neb_res_min(i) = spec_lambda(j+1)-spec_lambda(j)
      ENDDO
 
+     ALLOCATE(gaussnebarr(nspec,nemline))
+     gaussnebarr = 0.0
+
      !set up a "master" array of normalized Gaussians
      !this makes the code much faster
      IF (setup_nebular_gaussians.EQ.1) THEN
@@ -1005,6 +1059,10 @@ SUBROUTINE SPS_SETUP(zin)
       ENDIF
       !burn the header
       READ(99,*)
+
+      ALLOCATE(xnebem_cont(nspec,nebnz,nebnage,nebnip))
+      xnebem_cont = 0.0
+
       !read the wavelength array
       READ(99,*) readlambneb
       DO i=1,nebnz

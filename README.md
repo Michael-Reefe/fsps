@@ -10,6 +10,8 @@ When using this code please cite the following papers:
 
 Installation
 ----------
+**NOTE**: The BT-Settl stellar grids are too large to include in a github repository (they are ~1.5GB in total). To obtain them, please download a gzipped tarball from the releases [here](https://github.com/Michael-Reefe/fsps/releases). Then follow the instructions at [doc/INSTALL](doc/INSTALL).
+
 If you have git installed, FSPS can be obtained with the following commands:
 ```
 cd /path/to/desired/location/

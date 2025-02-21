@@ -7,7 +7,7 @@ MODULE SPS_VARS
 
 !-------set the spectral library------!
 #ifndef MILES
-#define MILES 1
+#define MILES 0
 #endif
 
 #ifndef BASEL
@@ -16,6 +16,10 @@ MODULE SPS_VARS
 
 #ifndef C3K
 #define C3K 0
+#endif
+
+#ifndef BTSETTL
+#define BTSETTL 1
 #endif
 
 !------set the isochrone library------!
@@ -269,6 +273,11 @@ MODULE SPS_VARS
   CHARACTER(5), PARAMETER :: spec_type = 'basel'
   INTEGER, PARAMETER :: nzinit=6
   INTEGER, PARAMETER :: nspec=1963
+#elif (BTSETTL)
+  REAL(SP), PARAMETER :: zsol_spec = 0.0134
+  CHARACTER(7), PARAMETER :: spec_type = 'btsettl'
+  INTEGER, PARAMETER :: nzinit=7
+  INTEGER, PARAMETER :: nspec=40209
 #endif
 #endif
 
@@ -449,28 +458,40 @@ MODULE SPS_VARS
   !arrays for stellar spectral information in HR diagram
   REAL(SP), DIMENSION(ndim_logt) :: speclib_logt=0.
   REAL(SP), DIMENSION(ndim_logg) :: speclib_logg=0.
-  REAL(KIND(1.0)), DIMENSION(nspec,nz,ndim_logt,ndim_logg) :: speclib=0.
+  ! ---> the speclib (and a few other) arrays become very large when nspec covers a high
+  !      resolution wavelength grid -- so large, in fact, that it apparently breaks Apple
+  !      Silicon chips' ability to run the code because it can't handle large static arrays.
+  !      ...to alleviate this, I've changed some of the worst offenders here into dynamically
+  !      allocatable arrays.
+  ! REAL(KIND(1.0)), DIMENSION(nspec,nz,ndim_logt,ndim_logg) :: speclib=0.
+  REAL(KIND(1.0)), ALLOCATABLE :: speclib(:,:,:,:)
 
   !arrays for the WMBasic grid
   REAL(SP), DIMENSION(ndim_wmb_logt) :: wmb_logt=0.
   REAL(SP), DIMENSION(ndim_wmb_logg) :: wmb_logg=0.
-  REAL(KIND(1.0)), DIMENSION(nspec,nz,ndim_wmb_logt,ndim_wmb_logg) :: wmb_spec=0.
+  ! REAL(KIND(1.0)), DIMENSION(nspec,nz,ndim_wmb_logt,ndim_wmb_logg) :: wmb_spec=0.
+  REAL(KIND(1.0)), ALLOCATABLE :: wmb_spec(:,:,:,:)
 
   !AGB library (Lancon & Mouhcine 2002)
-  REAL(SP), DIMENSION(nspec,n_agb_o) :: agb_spec_o=0.
+  ! REAL(SP), DIMENSION(nspec,n_agb_o) :: agb_spec_o=0.
+  ! REAL(SP), DIMENSION(nspec,n_agb_c) :: agb_spec_c=0.
+  REAL(SP), ALLOCATABLE :: agb_spec_o(:,:)
+  REAL(SP), ALLOCATABLE :: agb_spec_c(:,:)
   REAL(SP), DIMENSION(nz,n_agb_o)    :: agb_logt_o=0.
-  REAL(SP), DIMENSION(nspec,n_agb_c) :: agb_spec_c=0.
   REAL(SP), DIMENSION(n_agb_c)       :: agb_logt_c=0.
   !C-rich library (Aringer et al. 2009)
   REAL(SP), DIMENSION(n_agb_car)       :: agb_logt_car=0.
-  REAL(SP), DIMENSION(nspec,n_agb_car) :: agb_spec_car=0.
+  ! REAL(SP), DIMENSION(nspec,n_agb_car) :: agb_spec_car=0.
+  REAL(SP), ALLOCATABLE :: agb_spec_car(:,:)
 
   !post-AGB library (Rauch 2003)
-  REAL(SP), DIMENSION(nspec,ndim_pagb,2) :: pagb_spec=0.
+  ! REAL(SP), DIMENSION(nspec,ndim_pagb,2) :: pagb_spec=0.
+  REAL(SP), ALLOCATABLE :: pagb_spec(:,:,:)
   REAL(SP), DIMENSION(ndim_pagb)         :: pagb_logt=0.
 
   !WR library (Smith et al. 2002)
-  REAL(SP), DIMENSION(nspec,ndim_wr,nz) :: wrn_spec=0.,wrc_spec=0.
+  ! REAL(SP), DIMENSION(nspec,ndim_wr,nz) :: wrn_spec=0.,wrc_spec=0.
+  REAL(SP), ALLOCATABLE :: wrn_spec(:,:,:), wrc_spec(:,:,:)
   REAL(SP), DIMENSION(ndim_wr)          :: wrn_logt=0.,wrc_logt=0.
 
 #if (DL07)
@@ -498,28 +519,33 @@ MODULE SPS_VARS
 
   REAL(SP), DIMENSION(ndim_dustem)                :: lambda_dustem=0.
   REAL(SP), DIMENSION(ndim_dustem,numin_dustem*2) :: dustem_dustem=0.
-  REAL(SP), DIMENSION(nspec,nqpah_dustem,numin_dustem*2) :: dustem2_dustem=0.
+  ! REAL(SP), DIMENSION(nspec,nqpah_dustem,numin_dustem*2) :: dustem2_dustem=0.
+  REAL(SP), ALLOCATABLE :: dustem2_dustem(:,:,:)
 
   !circumstellar AGB dust model (Villaume et al. 2015)
-  REAL(SP), DIMENSION(nspec,2,nteff_dagb,ntau_dagb) :: flux_dagb=0.
+  ! REAL(SP), DIMENSION(nspec,2,nteff_dagb,ntau_dagb) :: flux_dagb=0.
+  REAL(SP), ALLOCATABLE :: flux_dagb(:,:,:,:)
   REAL(SP), DIMENSION(2,ntau_dagb)                  :: tau1_dagb=0.
   REAL(SP), DIMENSION(2,nteff_dagb)                 :: teff_dagb=0.
 
   !nebular emission model
   REAL(SP), DIMENSION(nemline) :: nebem_line_pos=0.
   REAL(SP), DIMENSION(nemline,nebnz,nebnage,nebnip) :: nebem_line=0.,xnebem_line=0.
-  REAL(SP), DIMENSION(nspec,nebnz,nebnage,nebnip) :: nebem_cont=0.,xnebem_cont=0.
+  ! REAL(SP), DIMENSION(nspec,nebnz,nebnage,nebnip) :: nebem_cont=0.,xnebem_cont=0.
+  REAL(SP), ALLOCATABLE :: nebem_cont(:,:,:,:), xnebem_cont(:,:,:,:)
   REAL(SP), DIMENSION(nebnz)   :: nebem_logz=0.
   REAL(SP), DIMENSION(nebnage) :: nebem_age=0.
   REAL(SP), DIMENSION(nebnip)  :: nebem_logu=0.
   !minimum resolution for nebular lines, based
   !on the resolution of the spectral libraries.
   REAL(SP), DIMENSION(nspec)   :: neb_res_min=0.0
-  REAL(SP), DIMENSION(nspec,nemline) :: gaussnebarr=0.0
+  ! REAL(SP), DIMENSION(nspec,nemline) :: gaussnebarr=0.0
+  REAL(SP), ALLOCATABLE :: gaussnebarr(:,:)
 
   !arrays for AGN dust
   REAL(SP), DIMENSION(nagndust)       :: agndust_tau=0.
-  REAL(SP), DIMENSION(nspec,nagndust) :: agndust_spec=0.
+  ! REAL(SP), DIMENSION(nspec,nagndust) :: agndust_spec=0.
+  REAL(SP), ALLOCATABLE :: agndust_spec(:,:)
 
   !arrays for the isochrone data
   REAL(SP), DIMENSION(nz,nt,nm) :: mact_isoc=0.,logl_isoc=0.,&
