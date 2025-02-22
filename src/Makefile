@@ -36,7 +36,7 @@ F90FLAGS := -O3 -cpp -fPIC $(F90FLAGS) # prepend so a user can set -Ofast from o
 #F90FLAGS = -O3 -funroll-loops -xP -cpp
 #---------------------
 
-PROGS = simple lesssimple autosps spec_bin
+PROGS = extract simple lesssimple autosps spec_bin
 
 COMMON = sps_vars.o sps_utils.o compsp.o csp_gen.o ssp_gen.o \
 	getmags.o locate.o funcint.o sps_setup.o pz_convol.o \
@@ -51,6 +51,11 @@ all : $(PROGS)
 
 clean :
 	rm -rf *.o *.mod *.MOD *~
+
+extract :
+	if ls ../SPECTRA/BT-Settl/btsettl_z*.spectra.bin.gz &>/dev/null; then \
+		gunzip ../SPECTRA/BT-Settl/btsettl_z*.spectra.bin.gz;             \
+	fi
 
 autosps : autosps.o $(COMMON)
 	$(F90) $(F90FLAGS) -o autosps.exe autosps.o $(COMMON)

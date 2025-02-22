@@ -277,7 +277,7 @@ MODULE SPS_VARS
   REAL(SP), PARAMETER :: zsol_spec = 0.0134
   CHARACTER(7), PARAMETER :: spec_type = 'btsettl'
   INTEGER, PARAMETER :: nzinit=7
-  INTEGER, PARAMETER :: nspec=40209
+  INTEGER, PARAMETER :: nspec=23530
 #endif
 #endif
 

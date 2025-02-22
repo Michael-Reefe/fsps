@@ -10,14 +10,14 @@ When using this code please cite the following papers:
 
 Installation
 ----------
-**NOTE**: The BT-Settl stellar grids are too large to include in a github repository (they are ~1.5GB in total). To obtain them, please download a gzipped tarball from the releases [here](https://github.com/Michael-Reefe/fsps/releases). Then follow the instructions at [doc/INSTALL](doc/INSTALL).
-
 If you have git installed, FSPS can be obtained with the following commands:
 ```
 cd /path/to/desired/location/
 git clone https://github.com/cconroy20/fsps
 ```
 Otherwise download a gzipped tarball from [here](https://github.com/cconroy20/fsps/releases). Then follow the instructions at [doc/INSTALL](doc/INSTALL).
+
+**NOTE**: The BT-Settl models are large and thus come zipped up. They will be automatically unzipped upon building the library for the first time (by running `make` in the source directory).
 
 You should not need to update the git repository until an update is announced (which is why you need to be on the mailing list - see [doc/INSTALL](doc/INSTALL)).  If you've obtained FSPS using git then when an update is announced you will need to simply type ``cd $SPS_HOME; git pull`` and then recompile.  If you have made your own edits to the FSPS files, git will attempt to gracefully merge your local version with the repository version.
 
