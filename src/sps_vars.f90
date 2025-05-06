@@ -31,8 +31,11 @@ MODULE SPS_VARS
 #define TLUSTYOB 0
 #endif
 
+!enables marginalizing over the logg axis of the
+!Rauch 2003 post-AGB spectra, which FSPS by default
+!uses an average spectrum for (I think?)
 #ifndef IPAGB_LOGG
-#define IPAGB_LOGG 0
+#define IPAGB_LOGG 1
 #endif
 
 !------set the isochrone library------!
