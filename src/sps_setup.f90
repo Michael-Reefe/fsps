@@ -13,10 +13,9 @@ SUBROUTINE SPS_SETUP(zin)
   USE sps_utils
   IMPLICIT NONE
   INTEGER, INTENT(in) :: zin
-  INTEGER :: stat=1,n,i,j,m,jj,k,i1,i2,stat2=1
+  INTEGER :: stat=1,n,i,j,m,jj,k,i1,i2,stat1=1,stat2=1
   INTEGER, PARAMETER :: ntlam=1221,nspec_agb=6146,nspec_aringer=9032
   INTEGER, PARAMETER :: nlamwr=1963,nspec_pagb=9281
-  INTEGER, PARAMETER :: nzwmb=12, nspec_wmb=5508
   INTEGER :: n_isoc,z,zmin,zmax,nlam
   CHARACTER(1) :: char,sqpah
   CHARACTER(6) :: zstype
@@ -40,7 +39,7 @@ SUBROUTINE SPS_SETUP(zin)
   REAL(SP), DIMENSION(22,n_agb_o)   :: tagb_logt_o
   REAL(SP), DIMENSION(22)           :: tagb_logz_o
   REAL(SP), DIMENSION(nspec_pagb) :: pagb_lam=0.0
-  REAL(SP), DIMENSION(nspec_pagb,ndim_pagb,2) :: pagb_specinit=0.
+  REAL(SP), DIMENSION(nspec_pagb,2,ndim_pagb_logt,ndim_pagb_logg) :: pagb_specinit=0.
   REAL(SP), DIMENSION(nspec_agb)  :: agb_lam=0.0
   REAL(SP), DIMENSION(nspec_aringer)  :: aringer_lam=0.0
   REAL(SP), DIMENSION(nspec_agb,n_agb_o) :: agb_specinit_o=0.
@@ -348,41 +347,69 @@ SUBROUTINE SPS_SETUP(zin)
 
   !--------------Read WMBasic Grid from JJ Eldridge----------------;
 
-  !read in Teff array
-  OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC.teff',&
-       STATUS='OLD',iostat=stat,ACTION='READ')
-  IF (stat.NE.0) THEN
-     WRITE(*,*) 'SPS_SETUP ERROR: /SPECTRA/Hot_spectra/'//&
-          'WMBASIC.teff cannot be opened'
+  !read in Teff and logg array
+  IF (hot_spec_type.EQ.'wmbasic') THEN
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC.teff',&
+         STATUS='OLD',iostat=stat1,ACTION='READ')
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC.logg',&
+         STATUS='OLD',iostat=stat2,ACTION='READ')
+  ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOB.teff',&
+         STATUS='OLD',iostat=stat1,ACTION='READ')
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOB.logg',&
+         STATUS='OLD',iostat=stat2,ACTION='READ')
+  ENDIF
+  IF (stat1.NE.0.OR.stat2.NE.0) THEN
+     WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.teff or *.logg file cannot be opened'
      STOP
   ENDIF
   DO i=1,ndim_wmb_logt
      READ(93,*) wmb_logt(i)
   ENDDO
+  DO i=1,ndim_wmb_logg
+     READ(94,*) wmb_logg(i)
+  ENDDO
   CLOSE(93)
+  CLOSE(94)
 
-  !logg for WMB grid
-  wmb_logg = (/3.5,4.0,4.5/)
-
-  OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC_zlegend.dat',&
-       STATUS='OLD',iostat=stat,ACTION='READ')
+  IF (hot_spec_type.EQ.'wmbasic') THEN
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC_zlegend.dat',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOB_zlegend.dat',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ENDIF
 
   DO z=1,nzwmb
 
      READ(93,*) zwmb(z)
      WRITE(zstype,'(F6.4)') zwmb(z)
 
-     OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC_z'//&
-          zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+     IF (hot_spec_type.EQ.'wmbasic') THEN
+      OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC_z'//&
+            zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+     ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
+      OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOBz'//&
+            zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+     ENDIF
      IF (stat.NE.0) THEN
-        WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/'//&
-          'WMBASIC_z'//zstype//'.spec '//'cannot be opened'
+        WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.spec cannot be opened'
         STOP
      ENDIF
-     DO i=1,nspec_wmb
-        READ(95,*) wmb_lam(i),wmb_specinit(i,:,1),wmb_specinit(i,:,2),&
-             wmb_specinit(i,:,3)
-     ENDDO
+     IF (hot_spec_type.EQ.'wmbasic') THEN
+      DO i=1,nspec_wmb
+         READ(95,*) wmb_lam(i),wmb_specinit(i,:,1),wmb_specinit(i,:,2),&
+               wmb_specinit(i,:,3)
+      ENDDO
+     ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
+      DO i=1,nspec_wmb
+         READ(95,*) wmb_lam(i),wmb_specinit(i,:,1),wmb_specinit(i,:,2),&
+               wmb_specinit(i,:,3),wmb_specinit(i,:,4),wmb_specinit(i,:,5),&
+               wmb_specinit(i,:,6),wmb_specinit(i,:,7),wmb_specinit(i,:,8),&
+               wmb_specinit(i,:,9),wmb_specinit(i,:,10),wmb_specinit(i,:,11),&
+               wmb_specinit(i,:,12),wmb_specinit(i,:,13)
+      ENDDO
+     ENDIF
      CLOSE(95)
 
      !interpolate to the main spectral grid
@@ -390,8 +417,8 @@ SUBROUTINE SPS_SETUP(zin)
      !input spectral grid
      DO i=1,ndim_wmb_logt
         DO j=1,ndim_wmb_logg
-           wmbsi(:,z,i,j) = MAX(linterparr(wmb_lam,wmb_specinit(:,i,j),&
-                spec_lambda),tiny_number)
+         wmbsi(:,z,i,j) = MAX(linterparr(wmb_lam,wmb_specinit(:,i,j),&
+               spec_lambda),tiny_number)
         ENDDO
      ENDDO
 
@@ -557,48 +584,91 @@ SUBROUTINE SPS_SETUP(zin)
      WRITE(*,*) 'SPS_SETUP ERROR: Hot_spectra/ipagb.teff cannot be opened'
      STOP
   ENDIF
-  DO i=1,ndim_pagb
+  DO i=1,ndim_pagb_logt
      READ(94,*) pagb_logt(i)
   ENDDO
   CLOSE(94)
   pagb_logt = LOG10(pagb_logt)
 
+  !read in post-AGB logg array (if necessary)
+  IF (pagb_do_logg.EQ.1) THEN
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Rauch_PAGB/ipagb.logg',&
+      STATUS='OLD',iostat=stat,ACTION='READ')
+   IF (stat.NE.0) THEN
+      WRITE(*,*) 'SPS_SETUP ERROR: Hot_spectra/Rauch_PAGB/ipagb.logg cannot be opened'
+      STOP
+   ENDIF
+   DO i=1,ndim_pagb_logg
+      READ(94,*) pagb_logg(i)
+   ENDDO
+   CLOSE(94)
+  ENDIF
+
   !read in solar metallicity post-AGB spectra
-  OPEN(97,FILE=TRIM(SPS_HOME)//'&
-       /SPECTRA/Hot_spectra/ipagb_solar.spec',&
-       STATUS='OLD',iostat=stat,ACTION='READ')
+  IF (pagb_do_logg.EQ.0) THEN
+   OPEN(97,FILE=TRIM(SPS_HOME)//'&
+         /SPECTRA/Hot_spectra/ipagb_solar.spec',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE 
+   OPEN(97,FILE=TRIM(SPS_HOME)//'&
+         /SPECTRA/Hot_spectra/Rauch_PAGB/ipagb_solar.spec',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ENDIF
   IF (stat.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: /SPECTRA/Hot_spectra/'//&
           'ipagb.spec_solar cannot be opened'
      STOP
   ENDIF
-  DO i=1,nspec_pagb
-     READ(97,*) pagb_lam(i),pagb_specinit(i,:,2)
-  ENDDO
+  IF (pagb_do_logg.EQ.0) THEN
+   DO i=1,nspec_pagb
+      READ(97,*) pagb_lam(i),pagb_specinit(i,2,:,1)
+   ENDDO
+  ELSE
+   DO i=1,nspec_pagb
+      READ(97,*) pagb_lam(i),pagb_specinit(i,2,:,1),pagb_specinit(i,2,:,2),&
+            pagb_specinit(i,2,:,3),pagb_specinit(i,2,:,4)
+   ENDDO
+  ENDIF
   CLOSE(97)
 
+
   !read in halo metallicity post-AGB spectra
-  OPEN(97,FILE=TRIM(SPS_HOME)//&
-       '/SPECTRA/Hot_spectra/ipagb_halo.spec',&
-       STATUS='OLD',iostat=stat,ACTION='READ')
+  IF (pagb_do_logg.EQ.0) THEN
+   OPEN(97,FILE=TRIM(SPS_HOME)//'&
+         /SPECTRA/Hot_spectra/ipagb_halo.spec',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE 
+   OPEN(97,FILE=TRIM(SPS_HOME)//'&
+         /SPECTRA/Hot_spectra/Rauch_PAGB/ipagb_halo.spec',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ENDIF
   IF (stat.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: /SPECTRA/Hot_spectra/'//&
           'ipagb.spec_halo cannot be opened'
      STOP
   ENDIF
-  DO i=1,nspec_pagb
-     READ(97,*) pagb_lam(i),pagb_specinit(i,:,1)
-  ENDDO
+  IF (pagb_do_logg.EQ.0) THEN
+   DO i=1,nspec_pagb
+      READ(97,*) pagb_lam(i),pagb_specinit(i,1,:,1)
+   ENDDO
+  ELSE
+   DO i=1,nspec_pagb
+      READ(97,*) pagb_lam(i),pagb_specinit(i,1,:,1),pagb_specinit(i,1,:,2),&
+            pagb_specinit(i,1,:,3),pagb_specinit(i,1,:,4)
+   ENDDO
+  ENDIF
   CLOSE(97)
 
-  ALLOCATE(pagb_spec(nspec,ndim_pagb,2))
+  ALLOCATE(pagb_spec(nspec,2,ndim_pagb_logt,ndim_pagb_logg))
   pagb_spec = 0.0
 
   !interpolate to the main spectral array
   DO j=1,2
-     DO i=1,ndim_pagb
-        pagb_spec(:,i,j) = MAX(linterparr(pagb_lam,pagb_specinit(:,i,j),&
-             spec_lambda),tiny_number)
+     DO i=1,ndim_pagb_logt
+        DO k=1,ndim_pagb_logg
+            pagb_spec(:,j,i,k) = MAX(linterparr(pagb_lam,pagb_specinit(:,j,i,k),&
+                  spec_lambda),tiny_number)
+        ENDDO
      ENDDO
   ENDDO
 

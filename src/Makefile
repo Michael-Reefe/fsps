@@ -55,6 +55,9 @@ clean :
 extract :
 	if ls ../SPECTRA/BT-Settl/btsettl_z*.spectra.bin.gz &>/dev/null; then \
 		gunzip ../SPECTRA/BT-Settl/btsettl_z*.spectra.bin.gz;             \
+	fi && \
+	if ls ../SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOBz*.spec.gz &>/dev/null; then \
+	    gunzip ../SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOBz*.spec.gz;             \
 	fi
 
 autosps : autosps.o $(COMMON)

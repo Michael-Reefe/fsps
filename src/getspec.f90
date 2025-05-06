@@ -16,7 +16,7 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
   REAL(SP), INTENT(inout), DIMENSION(nspec) :: spec  
   REAL(SP), DIMENSION(nspec) :: ispec
   REAL(SP) :: t,u,r2,test1,test2,test3,test4,loggi,teffi,rwr,twr,logt_cut
-  INTEGER  :: klo,jlo,flag
+  INTEGER  :: klo,jlo,mlo,flag
 
   !---------------------------------------------------------------!
   !---------------------------------------------------------------!
@@ -37,14 +37,62 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
   IF (phase.EQ.6.0.AND.logt.GE.4.699) THEN
     
      flag = flag+1
-     jlo = MIN(MAX(locate(pagb_logt,logt),1),ndim_pagb-1)
+     jlo = MIN(MAX(locate(pagb_logt,logt),1),ndim_pagb_logt-1)
      t   = (logt-pagb_logt(jlo)) / &
           (pagb_logt(jlo+1)-pagb_logt(jlo))
      t = MIN(MAX(t,0.0),1.0) !no extrapolation
      klo = 1
      IF (zlegend(pset%zmet)/zsol.GT.0.5) klo=2 
-     !the post-agb library is normalized to unity
-     spec = lbol*((1-t)*pagb_spec(:,jlo,klo)+t*pagb_spec(:,jlo+1,klo))
+
+     IF (pagb_do_logg.EQ.1) THEN
+
+      mlo = MIN(MAX(locate(pagb_logg,logg),1),ndim_pagb_logg-1)
+      u   = (loggi-pagb_logg(mlo))  / (pagb_logg(mlo+1)-pagb_logg(mlo))
+      u   = MIN(MAX(u,0.0),1.0) !no extrapolation in logg
+
+      test1 = pagb_spec(whlam5000,pset%zmet,jlo,klo)
+      test2 = pagb_spec(whlam5000,pset%zmet,jlo+1,klo)
+      test3 = pagb_spec(whlam5000,pset%zmet,jlo,klo+1)
+      test4 = pagb_spec(whlam5000,pset%zmet,jlo+1,klo+1)
+ 
+      !if all four components are zero, set the flag to zero
+      IF ((test1.LE.tiny30.AND.test2.LE.tiny30.AND.&
+           test3.LE.tiny30.AND.test4.LE.tiny30)) flag=0
+ 
+      !catch stars that fall off part of the grid
+      !the flux at 5000A should never be zero unless a spec is missing
+      IF ((test1.LE.tiny30.OR.test2.LE.tiny30.OR.&
+           test3.LE.tiny30.OR.test4.LE.tiny30).AND.flag.EQ.1) THEN
+ 
+         IF (verbose.EQ.99) & 
+              WRITE(*,'(" GETSPEC WARNING: Part of the '//&
+              'point is off the grid: Z=",I2,'//&
+              '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
+              pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
+ 
+         !this is a very crude hack.  just pick one of the spectra
+         IF (test1.GT.tiny30) spec = pagb_spec(:,pset%zmet,jlo,klo)
+         IF (test2.GT.tiny30) spec = pagb_spec(:,pset%zmet,jlo+1,klo)
+         IF (test3.GT.tiny30) spec = pagb_spec(:,pset%zmet,jlo,klo+1)
+         IF (test4.GT.tiny30) spec = pagb_spec(:,pset%zmet,jlo+1,klo+1)
+ 
+      ELSE
+
+         !the post-agb library is normalized to unity
+         spec = lbol*( &
+               (1-t)*(1-u)*pagb_spec(:,klo,jlo,mlo) + &
+               t*(1-u)*pagb_spec(:,klo,jlo+1,mlo) + &
+               (1-t)*u*pagb_spec(:,klo,jlo,mlo+1) + &
+               t*u*pagb_spec(:,klo,jlo+1,mlo+1) &
+               )
+
+      ENDIF
+
+     ELSE
+
+      spec = lbol*((1-t)*pagb_spec(:,klo,jlo,1) + t*pagb_spec(:,klo,jlo+1,1))
+
+     ENDIF
 
   !WR library from Smith et al. 2002 (CMFGEN)
   !NB: there is currently no log(g) dependence in the WR spectra
@@ -138,10 +186,41 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
      u   = (loggi-wmb_logg(klo))  / (wmb_logg(klo+1)-wmb_logg(klo))
      u   = MIN(MAX(u,0.0),1.0) !no extrapolation in logg
 
-     spec = (1-t)*(1-u)*wmb_spec(:,pset%zmet,jlo,klo) + &
-          t*(1-u)*wmb_spec(:,pset%zmet,jlo+1,klo) + &
-          t*u*wmb_spec(:,pset%zmet,jlo+1,klo+1) + &
-          (1-t)*u*wmb_spec(:,pset%zmet,jlo,klo+1)
+     test1 = wmb_spec(whlam5000,pset%zmet,jlo,klo)
+     test2 = wmb_spec(whlam5000,pset%zmet,jlo+1,klo)
+     test3 = wmb_spec(whlam5000,pset%zmet,jlo,klo+1)
+     test4 = wmb_spec(whlam5000,pset%zmet,jlo+1,klo+1)
+
+     !if all four components are zero, set the flag to zero
+     IF ((test1.LE.tiny30.AND.test2.LE.tiny30.AND.&
+          test3.LE.tiny30.AND.test4.LE.tiny30)) flag=0
+
+     !catch stars that fall off part of the grid
+     !the flux at 5000A should never be zero unless a spec is missing
+     IF ((test1.LE.tiny30.OR.test2.LE.tiny30.OR.&
+          test3.LE.tiny30.OR.test4.LE.tiny30).AND.flag.EQ.1) THEN
+
+        IF (verbose.EQ.99) & 
+             WRITE(*,'(" GETSPEC WARNING: Part of the '//&
+             'point is off the grid: Z=",I2,'//&
+             '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
+             pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
+
+        !this is a very crude hack.  just pick one of the spectra
+        IF (test1.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo)
+        IF (test2.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo)
+        IF (test3.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo+1)
+        IF (test4.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo+1)
+
+     ELSE
+
+      spec = (1-t)*(1-u)*wmb_spec(:,pset%zmet,jlo,klo) + &
+            t*(1-u)*wmb_spec(:,pset%zmet,jlo+1,klo) + &
+            t*u*wmb_spec(:,pset%zmet,jlo+1,klo+1) + &
+            (1-t)*u*wmb_spec(:,pset%zmet,jlo,klo+1)
+
+     ENDIF
+   
      !the WMBasic library is normalized to unity
      spec = spec*lbol
 

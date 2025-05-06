@@ -22,6 +22,19 @@ MODULE SPS_VARS
 #define BTSETTL 1
 #endif
 
+!-------set the hot spectral libraries------!
+#ifndef WMBASIC
+#define WMBASIC 1
+#endif 
+
+#ifndef TLUSTYOB 
+#define TLUSTYOB 0
+#endif
+
+#ifndef IPAGB_LOGG
+#define IPAGB_LOGG 0
+#endif
+
 !------set the isochrone library------!
 #ifndef MIST
 #define MIST 1
@@ -309,11 +322,27 @@ MODULE SPS_VARS
   !number of O-rich, C-rich AGB spectra (and Aringer C-rich spec)
   INTEGER, PARAMETER :: n_agb_o=9, n_agb_c=5, n_agb_car=9
   !number of post-AGB spectra
-  INTEGER, PARAMETER :: ndim_pagb=14
+#if (IPAGB_LOGG)
+  INTEGER, PARAMETER :: ndim_pagb_logt=15, ndim_pagb_logg=4
+  INTEGER, PARAMETER :: pagb_do_logg=1
+#else
+  INTEGER, PARAMETER :: ndim_pagb_logt=15, ndim_pagb_logg=1
+  INTEGER, PARAMETER :: pagb_do_logg=0
+#endif
   !number of WR spectra
   INTEGER, PARAMETER :: ndim_wr=12
-  !dimensions of WMBasic grid
+
+  !dimensions of hot stellar grid (WMBasic or TLUSTY OSTAR/BSTAR)
+#if (WMBASIC)
   INTEGER, PARAMETER :: ndim_wmb_logt=11,ndim_wmb_logg=3
+  INTEGER, PARAMETER :: nzwmb=12, nspec_wmb=5508
+  CHARACTER(7), PARAMETER :: hot_spec_type = 'wmbasic'
+#elif (TLUSTYOB)
+  INTEGER, PARAMETER :: ndim_wmb_logt=26,ndim_wmb_logg=13
+  INTEGER, PARAMETER :: nzwmb=6, nspec_wmb=23530
+  CHARACTER(8), PARAMETER :: hot_spec_type = 'tlustyob'
+#endif 
+
   !parameters for circumstellar dust models
   INTEGER, PARAMETER :: ntau_dagb=50, nteff_dagb=6
   !number of emission lines and continuum emission points
@@ -486,8 +515,9 @@ MODULE SPS_VARS
 
   !post-AGB library (Rauch 2003)
   ! REAL(SP), DIMENSION(nspec,ndim_pagb,2) :: pagb_spec=0.
-  REAL(SP), ALLOCATABLE :: pagb_spec(:,:,:)
-  REAL(SP), DIMENSION(ndim_pagb)         :: pagb_logt=0.
+  REAL(SP), ALLOCATABLE :: pagb_spec(:,:,:,:)
+  REAL(SP), DIMENSION(ndim_pagb_logt)         :: pagb_logt=0.
+  REAL(SP), DIMENSION(ndim_pagb_logg)         :: pagb_logg=0.
 
   !WR library (Smith et al. 2002)
   ! REAL(SP), DIMENSION(nspec,ndim_wr,nz) :: wrn_spec=0.,wrc_spec=0.
