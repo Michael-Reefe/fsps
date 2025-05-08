@@ -24,11 +24,18 @@ MODULE SPS_VARS
 
 !-------set the hot spectral libraries------!
 #ifndef WMBASIC
-#define WMBASIC 1
+#define WMBASIC 0
 #endif 
 
 #ifndef TLUSTYOB 
 #define TLUSTYOB 0
+#endif
+
+!note: the plan with this one is to have it enable
+!BOTH the O/B library and the Wolf-Rayet library 
+!from PoWR
+#ifndef POWR
+#define POWR 1
 #endif
 
 !enables marginalizing over the logg axis of the
@@ -335,7 +342,7 @@ MODULE SPS_VARS
   !number of WR spectra
   INTEGER, PARAMETER :: ndim_wr=12
 
-  !dimensions of hot stellar grid (WMBasic or TLUSTY OSTAR/BSTAR)
+  !dimensions of hot stellar grid (WMBasic, TLUSTY OSTAR/BSTAR, or PoWR)
 #if (WMBASIC)
   INTEGER, PARAMETER :: ndim_wmb_logt=11,ndim_wmb_logg=3
   INTEGER, PARAMETER :: nzwmb=12, nspec_wmb=5508
@@ -344,6 +351,10 @@ MODULE SPS_VARS
   INTEGER, PARAMETER :: ndim_wmb_logt=26,ndim_wmb_logg=13
   INTEGER, PARAMETER :: nzwmb=6, nspec_wmb=23530
   CHARACTER(8), PARAMETER :: hot_spec_type = 'tlustyob'
+#elif (POWR)
+  INTEGER, PARAMETER :: ndim_wmb_logt=42,ndim_wmb_logg=12
+  INTEGER, PARAMETER :: nzwmb=4, nspec_wmb=23530
+  CHARACTER(4), PARAMETER :: hot_spec_type = 'powr'
 #endif 
 
   !parameters for circumstellar dust models

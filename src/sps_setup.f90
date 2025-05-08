@@ -358,6 +358,11 @@ SUBROUTINE SPS_SETUP(zin)
          STATUS='OLD',iostat=stat1,ACTION='READ')
    OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOB.logg',&
          STATUS='OLD',iostat=stat2,ACTION='READ')
+  ELSE IF (hot_spec_type.EQ.'powr') THEN
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR.teff',&
+         STATUS='OLD',iostat=stat1,ACTION='READ')
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR.logg',&
+         STATUS='OLD',iostat=stat2,ACTION='READ')
   ENDIF
   IF (stat1.NE.0.OR.stat2.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.teff or *.logg file cannot be opened'
@@ -378,6 +383,9 @@ SUBROUTINE SPS_SETUP(zin)
   ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
    OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOB_zlegend.dat',&
          STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE IF (hot_spec_type.EQ.'powr') THEN
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR_zlegend.dat',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
   ENDIF
 
   DO z=1,nzwmb
@@ -391,25 +399,17 @@ SUBROUTINE SPS_SETUP(zin)
      ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
       OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOBz'//&
             zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+     ELSE IF (hot_spec_type.EQ.'powr') THEN
+      OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR_z'//&
+            zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
      ENDIF
      IF (stat.NE.0) THEN
         WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.spec cannot be opened'
         STOP
      ENDIF
-     IF (hot_spec_type.EQ.'wmbasic') THEN
-      DO i=1,nspec_wmb
-         READ(95,*) wmb_lam(i),wmb_specinit(i,:,1),wmb_specinit(i,:,2),&
-               wmb_specinit(i,:,3)
-      ENDDO
-     ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
-      DO i=1,nspec_wmb
-         READ(95,*) wmb_lam(i),wmb_specinit(i,:,1),wmb_specinit(i,:,2),&
-               wmb_specinit(i,:,3),wmb_specinit(i,:,4),wmb_specinit(i,:,5),&
-               wmb_specinit(i,:,6),wmb_specinit(i,:,7),wmb_specinit(i,:,8),&
-               wmb_specinit(i,:,9),wmb_specinit(i,:,10),wmb_specinit(i,:,11),&
-               wmb_specinit(i,:,12),wmb_specinit(i,:,13)
-      ENDDO
-     ENDIF
+     DO i=1,nspec_wmb
+      READ(95,*) wmb_lam(i), (wmb_specinit(i,:,j), j=1,ndim_wmb_logg)
+     ENDDO
      CLOSE(95)
 
      !interpolate to the main spectral grid

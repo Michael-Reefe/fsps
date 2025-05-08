@@ -58,7 +58,10 @@ extract :
 	fi && \
 	if ls ../SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOBz*.spec.gz &>/dev/null; then \
 	    gunzip ../SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOBz*.spec.gz;             \
-	fi
+	fi && \
+	if ls ../SPECTRA/Hot_spectra/PoWR/PoWR_z*.spec.gz &>/dev/null; then \
+		gunzip ../SPECTRA/Hot_spectra/PoWR/PoWR_z*.spec.gz;             \
+	fi 
 
 autosps : autosps.o $(COMMON)
 	$(F90) $(F90FLAGS) -o autosps.exe autosps.o $(COMMON)
