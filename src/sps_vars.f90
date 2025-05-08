@@ -340,7 +340,11 @@ MODULE SPS_VARS
   INTEGER, PARAMETER :: pagb_do_logg=0
 #endif
   !number of WR spectra
-  INTEGER, PARAMETER :: ndim_wr=12
+#if (POWR)
+  INTEGER, PARAMETER :: ndim_wr=17, nlamwr=23530, nzwr=4
+#else
+  INTEGER, PARAMETER :: ndim_wr=12, nlamwr=1963, nzwr=5
+#endif
 
   !dimensions of hot stellar grid (WMBasic, TLUSTY OSTAR/BSTAR, or PoWR)
 #if (WMBASIC)
@@ -529,6 +533,11 @@ MODULE SPS_VARS
 
   !post-AGB library (Rauch 2003)
   ! REAL(SP), DIMENSION(nspec,ndim_pagb,2) :: pagb_spec=0.
+#if (IPAGB_LOGG)
+  INTEGER, PARAMETER :: nspec_pagb=23530
+#else
+  INTEGER, PARAMETER :: nspec_pagb=9281
+#endif
   REAL(SP), ALLOCATABLE :: pagb_spec(:,:,:,:)
   REAL(SP), DIMENSION(ndim_pagb_logt)         :: pagb_logt=0.
   REAL(SP), DIMENSION(ndim_pagb_logg)         :: pagb_logg=0.

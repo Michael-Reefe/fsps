@@ -78,15 +78,15 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
  
       ELSE
 
-         !the post-agb library is normalized to unity
-         spec = lbol*( &
-               (1-t)*(1-u)*pagb_spec(:,klo,jlo,mlo) + &
+         spec = ((1-t)*(1-u)*pagb_spec(:,klo,jlo,mlo) + &
                t*(1-u)*pagb_spec(:,klo,jlo+1,mlo) + &
                (1-t)*u*pagb_spec(:,klo,jlo,mlo+1) + &
-               t*u*pagb_spec(:,klo,jlo+1,mlo+1) &
-               )
+               t*u*pagb_spec(:,klo,jlo+1,mlo+1))
 
       ENDIF
+
+      !the post-agb library is normalized to unity
+      spec = spec*lbol
 
      ELSE
 
@@ -117,9 +117,37 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
         jlo  = MIN(MAX(locate(wrn_logt,twr),1),ndim_wr-1)
         t    = (twr-wrn_logt(jlo))/(wrn_logt(jlo+1)-wrn_logt(jlo))
         t    = MIN(MAX(t,0.0),1.0) !no extrapolation
+
+        test1 = wrn_spec(whlam5000,jlo,pset%zmet)
+        test2 = wrn_spec(whlam5000,jlo+1,pset%zmet)
+
+        !if both components are zero, set the flag to zero
+        IF ((test1.LE.tiny30.AND.test2.LE.tiny30)) flag=0
+
+       !catch stars that fall off part of the grid
+       !the flux at 5000A should never be zero unless a spec is missing
+       IF ((test1.LE.tiny30.OR.test2.LE.tiny30).AND.flag.EQ.1) THEN
+
+          IF (verbose.EQ.99) & 
+               WRITE(*,'(" GETSPEC WARNING: Part of the '//&
+               'point is off the grid: Z=",I2,'//&
+               '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
+               pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
+
+          !this is a very crude hack.  just pick one of the spectra
+          IF (test1.GT.tiny30) spec = wrn_spec(:,jlo,pset%zmet)
+          IF (test2.GT.tiny30) spec = wrn_spec(:,jlo+1,pset%zmet)
+
+       ELSE
+
         !the WR library is normalized to unity
-        spec = lbol*((1-t)*wrn_spec(:,jlo,pset%zmet)+&
+        spec = ((1-t)*wrn_spec(:,jlo,pset%zmet)+&
              t*wrn_spec(:,jlo+1,pset%zmet))
+
+       ENDIF
+
+       !the WR library is normalized to unity
+       spec = spec*lbol
 
      ELSE IF (ffco.GE.10) THEN
      
@@ -128,9 +156,36 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
         jlo  = MIN(MAX(locate(wrc_logt,twr),1),ndim_wr-1)
         t    = (twr-wrc_logt(jlo))/(wrc_logt(jlo+1)-wrc_logt(jlo))
         t    = MIN(MAX(t,0.0),1.0) !no extrapolation
+
+        test1 = wrc_spec(whlam5000,jlo,pset%zmet)
+        test2 = wrc_spec(whlam5000,jlo+1,pset%zmet)
+
+        !if both components are zero, set the flag to zero
+        IF ((test1.LE.tiny30.AND.test2.LE.tiny30)) flag=0
+
+        !catch stars that fall off part of the grid
+        !the flux at 5000A should never be zero unless a spec is missing
+        IF ((test1.LE.tiny30.OR.test2.LE.tiny30).AND.flag.EQ.1) THEN
+
+          IF (verbose.EQ.99) & 
+               WRITE(*,'(" GETSPEC WARNING: Part of the '//&
+               'point is off the grid: Z=",I2,'//&
+               '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
+               pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
+
+          !this is a very crude hack.  just pick one of the spectra
+          IF (test1.GT.tiny30) spec = wrc_spec(:,jlo,pset%zmet)
+          IF (test2.GT.tiny30) spec = wrc_spec(:,jlo+1,pset%zmet)
+
+        ELSE
+
+          spec = ((1-t)*wrc_spec(:,jlo,pset%zmet)+&
+               t*wrc_spec(:,jlo+1,pset%zmet))
+
+        ENDIF
+
         !the WR library is normalized to unity
-        spec = lbol*((1-t)*wrc_spec(:,jlo,pset%zmet)+&
-             t*wrc_spec(:,jlo+1,pset%zmet))
+        spec = spec*lbol
 
      ENDIF
 

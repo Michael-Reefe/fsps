@@ -15,7 +15,6 @@ SUBROUTINE SPS_SETUP(zin)
   INTEGER, INTENT(in) :: zin
   INTEGER :: stat=1,n,i,j,m,jj,k,i1,i2,stat1=1,stat2=1
   INTEGER, PARAMETER :: ntlam=1221,nspec_agb=6146,nspec_aringer=9032
-  INTEGER, PARAMETER :: nlamwr=1963,nspec_pagb=9281
   INTEGER :: n_isoc,z,zmin,zmax,nlam
   CHARACTER(1) :: char,sqpah
   CHARACTER(6) :: zstype
@@ -27,8 +26,8 @@ SUBROUTINE SPS_SETUP(zin)
   REAL(SP), DIMENSION(ntlam) :: tvega_lam=0.,tvega_spec=0.
   REAL(SP), DIMENSION(ntlam) :: tsun_lam=0.,tsun_spec=0.
   REAL(SP), DIMENSION(nlamwr) :: tlamwr=0.,tspecwr=0.
-  REAL(SP), DIMENSION(nlamwr,ndim_wr,5) :: twrc=0.,twrn=0.
-  REAL(SP), DIMENSION(5) :: twrzmet=0.
+  REAL(SP), DIMENSION(nlamwr,ndim_wr,nzwr) :: twrc=0.,twrn=0.
+  REAL(SP), DIMENSION(nzwr) :: twrzmet=0.
   REAL(SP), DIMENSION(50000) :: readlamb=0.,readband=0.
   REAL(SP), DIMENSION(25) :: wglam=0.
   REAL(SP), DIMENSION(25,18,2,6) :: wgtmp=0.
@@ -675,8 +674,13 @@ SUBROUTINE SPS_SETUP(zin)
   !--------------read in WR spectra from Smith et al.--------------;
 
   !read in WR-N Teff array
-  OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/CMFGEN_WN.teff',&
-       STATUS='OLD',iostat=stat,ACTION='READ')
+  IF (hot_spec_type.EQ.'powr') THEN
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR_WN/PoWR_WN.teff',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/CMFGEN_WN.teff',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ENDIF
   IF (stat.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: Hot_spectra/CMFGEN_WN.teff cannot be opened'
      STOP
@@ -687,8 +691,13 @@ SUBROUTINE SPS_SETUP(zin)
   CLOSE(94)
 
   !read in WR-C Teff array
-  OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/CMFGEN_WC.teff',&
-       STATUS='OLD',iostat=stat,ACTION='READ')
+  IF (hot_spec_type.EQ.'powr') THEN
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR_WC/PoWR_WC.teff',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/CMFGEN_WC.teff',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ENDIF
   IF (stat.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: Hot_spectra/CMFGEN_WC.teff cannot be opened'
      STOP
@@ -699,15 +708,20 @@ SUBROUTINE SPS_SETUP(zin)
   CLOSE(94)
 
   !read in WR-N spectra
-  OPEN(97,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/CMFGEN_WN_Zall'//&
-       '.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+  IF (hot_spec_type.EQ.'powr') THEN
+   OPEN(97,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR_WN/PoWR_WN_Zall'//&
+         '.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE
+   OPEN(97,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/CMFGEN_WN_Zall'//&
+         '.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+  ENDIF
   IF (stat.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: Hot_spectra/CMFGEN_WN_*.spec '//&
           'cannot be opened'
      STOP
   ENDIF
   READ(97,*) tlamwr
-  DO j=1,5
+  DO j=1,nzwr
      DO i=1,ndim_wr
         READ(97,*) d1,twrzmet(j)
         READ(97,*) twrn(:,i,j)
@@ -733,15 +747,20 @@ SUBROUTINE SPS_SETUP(zin)
   ENDDO
 
   !read in WR-C spectra
-  OPEN(97,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/CMFGEN_WC_Zall'//&
-       '.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+  IF (hot_spec_type.EQ.'powr') THEN
+   OPEN(97,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR_WC/PoWR_WC_Zall'//&
+         '.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE
+   OPEN(97,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/CMFGEN_WC_Zall'//&
+         '.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+  ENDIF
   IF (stat.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: Hot_spectra/CMFGEN_WC_*.spec '//&
           'cannot be opened'
      STOP
   ENDIF
   READ(97,*) tlamwr
-  DO j=1,5
+  DO j=1,nzwr
      DO i=1,ndim_wr
         READ(97,*) d1,twrzmet(j)
         READ(97,*) twrc(:,i,j)
