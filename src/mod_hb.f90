@@ -71,13 +71,6 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
   mint = 10**(hbtime-0.025) / 1E6
   maxt = 10**(hbtime+0.025) / 1E6
 
-  WRITE(*,*) '----------------------'
-  WRITE(*,*) 't        = ', t
-  WRITE(*,*) 'time     = ', 10**hbtime
-  WRITE(*,*) 'mint    = ', mint
-  WRITE(*,*) 'maxt    = ', maxt
-  WRITE(*,*) 'hb_wght0 = ', hb_wght0
-
   IF (isoc_type.EQ.'pdva') THEN
 
       DO j=2,nm
@@ -207,8 +200,6 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
             ENDDO
          ENDDO
 
-         WRITE(*,*) 'hb_wght1 = ', hb_wght1
-
       ENDIF
 
       !the weights now also need to be modified based on 2 factors:
@@ -228,8 +219,6 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
       ENDDO
 
    ENDIF
-
-  WRITE(*,*) '----------------------'
 
   IF (nmass(t).GT.nm) THEN
      WRITE(*,*) 'MOD_HB ERROR: number of mass points GT nm', nmass(t), nm
