@@ -34,10 +34,14 @@ SUBROUTINE SSP_GEN(pset,mass_ssp,lbol_ssp,spec_ssp)
   !temp arrays for the isochrone data
   REAL(SP), DIMENSION(nt,nm) :: mini,mact,logl,logt,logg,&
        ffco,phase,lmdot
+  !same for the DRO3 isochrones
+  REAL(SP), DIMENSION(nt_dro,nm_dro) :: macthb,loglhb,logthb,logghb,mchb,yhb,zhb
+
   !arrays holding the number of mass elements for each
   !isochrone and the age of each isochrone
   INTEGER, DIMENSION(nt)     :: nmass
   REAL(SP), DIMENSION(nt)    :: time
+  REAL(SP), DIMENSION(nt_dro) :: timehb
   REAL(SP), DIMENSION(nspec) :: tspec
   !structure containing all necessary parameters
   !(TYPE objects defined in sps_vars.f90)
@@ -124,6 +128,16 @@ SUBROUTINE SSP_GEN(pset,mass_ssp,lbol_ssp,spec_ssp)
      nmass = nmass_isoc(pset%zmet,:)   !number of elements per isochrone
      time  = timestep_isoc(pset%zmet,:)!age of each isochrone in log(yr)
 
+     !do the same for the DRO3 isochrones
+     macthb = mact_dro(pset%bhbcomp,:,:)   ! actual (present) mass
+     loglhb = logl_dro(pset%bhbcomp,:,:)   ! log(Lbol)
+     logthb = logt_dro(pset%bhbcomp,:,:)   ! log(Teff)
+     logghb = logg_dro(pset%bhbcomp,:,:)   ! log(g)
+     mchb   = mc_dro(pset%bhbcomp,:,:)     ! core mass
+     yhb    = y_dro(pset%bhbcomp,:,:)      ! helium mass fraction
+     zhb    = z_dro(pset%bhbcomp,:,:)      ! metals mass fraction
+     timehb = timestep_dro(pset%bhbcomp,:) ! age of each isochrone in Myr since ZAHB
+
      !write for control
      IF (verbose.EQ.1) THEN
         WRITE(*,*)
@@ -166,7 +180,8 @@ SUBROUTINE SSP_GEN(pset,mass_ssp,lbol_ssp,spec_ssp)
         !need the hb weight for the blue stragglers too
         IF (pset%fbhb.GT.0.0.OR.pset%sbss.GT.1E-3) &
              CALL MOD_HB(pset%fbhb,i,mini,mact,logl,logt,logg,phase,&
-             wght,hb_wght,nmass,time(i))
+             wght,hb_wght,nmass,time(i),macthb,loglhb,logthb,logghb,mchb,&
+             yhb,zhb,timehb)
 
         !add in blue stragglers
         IF (time(i).GE.bhb_sbs_time.AND.pset%sbss.GT.1E-3) &

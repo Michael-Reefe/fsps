@@ -273,6 +273,12 @@ MODULE SPS_VARS
   INTEGER, PARAMETER :: nz=12
 #endif
 
+  !DRO3 isochrone parameters (used in conjunction with the standard isochrones)
+  REAL(SP), PARAMETER :: zsol_dro=0.0169
+  INTEGER, PARAMETER :: nt_dro=234
+  INTEGER, PARAMETER :: nm_dro=136
+  INTEGER, PARAMETER :: nz_dro=8
+
   !flag indicating type of spectral library to use
   !and number of elements per stellar spectrum
 #if (BPASS)
@@ -322,7 +328,7 @@ MODULE SPS_VARS
   !unless you are changing the libraries
 
   !max dimension of array for each isochrone
-  INTEGER, PARAMETER :: nm=2000
+  INTEGER, PARAMETER :: nm=2400
   !max number of lines to read in
   INTEGER, PARAMETER ::  nlines=1000000
   !max number of lines in tabulated SFH, LSF
@@ -604,13 +610,20 @@ MODULE SPS_VARS
   REAL(SP), DIMENSION(nz,nt,nm) :: mact_isoc=0.,logl_isoc=0.,&
        logt_isoc=0.,logg_isoc=0.,ffco_isoc=0.,phase_isoc=0.,&
        mini_isoc=0.,lmdot_isoc=0.
+  !arrays for the DRO3 isochrone data
+  REAL(SP), DIMENSION(nz_dro,nt_dro,nm_dro) :: mact_dro=0.,logl_dro=0.,&
+       logt_dro=0.,logg_dro=0.,mc_dro=0.,y_dro=0.,z_dro=0.
 
   !arrays holding the number of mass elements for each isochrone,
   !the age of each isochrone, and the metallicity of each isochrone
   INTEGER, DIMENSION(nz,nt)  :: nmass_isoc=0
+  INTEGER, DIMENSION(nz_dro,nt_dro) :: nmass_dro=0
   REAL(SP), DIMENSION(nz,nt) :: timestep_isoc=0.
+  REAL(SP), DIMENSION(nz_dro,nt_dro) :: timestep_dro=0.
   REAL(SP), DIMENSION(nz)    :: zlegend=-99.
   REAL(SP), DIMENSION(nzinit):: zlegendinit=-99.
+  REAL(SP), DIMENSION(nz_dro) :: zlegend_dro=-99.
+  REAL(SP), DIMENSION(nz_dro) :: ylegend_dro=-99.
 
   !arrays for the full Z-dep SSP spectra
   REAL(SP), DIMENSION(nspec,ntfull,nz) :: spec_ssp_zz=0.
@@ -647,7 +660,7 @@ MODULE SPS_VARS
           masscut=150.0,sigma_smooth=0.,agb_dust=1.0,min_wave_smooth=1E3,&
           max_wave_smooth=1E4,gas_logu=-2.0,gas_logz=0.,igm_factor=1.0,&
           fagn=0.0,agn_tau=10.0,frac_xrb=1.0,dust3=0.
-     INTEGER :: zmet=1,sfh=0,wgp1=1,wgp2=1,wgp3=1,evtype=-1
+     INTEGER :: zmet=1,sfh=0,wgp1=1,wgp2=1,wgp3=1,evtype=-1,bhbcomp=1
      INTEGER, DIMENSION(nbands) :: mag_compute=1
      INTEGER, DIMENSION(nt) :: ssp_gen_age=1
      CHARACTER(50) :: imf_filename='', sfh_filename=''

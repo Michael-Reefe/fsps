@@ -17,8 +17,10 @@ SUBROUTINE SBF(pset,outfile)
   REAL(SP), DIMENSION(nbands) :: mags
   REAL(SP), DIMENSION(nm)     :: wght
   REAL(SP), DIMENSION(nt,nm)  :: mini,mact,logl,logt,logg,ffco,phase,lmdot
+  REAL(SP), DIMENSION(nt_dro,nm_dro) :: macthb,loglhb,logthb,logghb,mchb,yhb,zhb
   INTEGER, DIMENSION(nt)      :: nmass
   REAL(SP), DIMENSION(nt)     :: time
+  REAL(SP), DIMENSION(nt_dro) :: timehb
 
   !-----------------------------------------------------------!
   !-----------------------------------------------------------!
@@ -49,6 +51,16 @@ SUBROUTINE SBF(pset,outfile)
   nmass = nmass_isoc(pset%zmet,:)   !number of elements per isochrone
   time  = timestep_isoc(pset%zmet,:)!age of each isochrone in log(yr)
 
+  !do the same for the DRO3 isochrones
+  macthb = mact_dro(pset%bhbcomp,:,:)   ! actual (present) mass
+  loglhb = logl_dro(pset%bhbcomp,:,:)   ! log(Lbol)
+  logthb = logt_dro(pset%bhbcomp,:,:)   ! log(Teff)
+  logghb = logg_dro(pset%bhbcomp,:,:)   ! log(g)
+  mchb   = mc_dro(pset%bhbcomp,:,:)     ! core mass
+  yhb    = y_dro(pset%bhbcomp,:,:)      ! helium mass fraction
+  zhb    = z_dro(pset%bhbcomp,:,:)      ! metal mass fraction
+  timehb = timestep_dro(pset%bhbcomp,:) ! age of each isochrone in Myr since ZAHB
+
   DO i=1,nt
 
      !compute IMF-based weights
@@ -58,7 +70,8 @@ SUBROUTINE SBF(pset,outfile)
      !need the hb weight for the blue stragglers too
      IF (pset%fbhb.GT.0.0.OR.pset%sbss.GT.1E-3) &
           CALL MOD_HB(pset%fbhb,i,mini,mact,logl,logt,logg,phase,&
-          wght,hb_wght,nmass,time(i))
+          wght,hb_wght,nmass,time(i),macthb,loglhb,logthb,logghb,mchb,&
+          yhb,zhb,timehb)
 
      !add in blue stragglers
      IF (time(i).GE.bhb_sbs_time.AND.pset%sbss.GT.1E-3) &

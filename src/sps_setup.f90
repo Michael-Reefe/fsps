@@ -16,10 +16,12 @@ SUBROUTINE SPS_SETUP(zin)
   INTEGER :: stat=1,n,i,j,m,jj,k,i1,i2,stat1=1,stat2=1
   INTEGER, PARAMETER :: ntlam=1221,nspec_agb=6146,nspec_aringer=9032
   INTEGER :: n_isoc,z,zmin,zmax,nlam
+  INTEGER :: n_isoc_dro
   CHARACTER(1) :: char,sqpah
   CHARACTER(6) :: zstype
   CHARACTER(5) :: zstype5
-  REAL(SP) :: dumr1,d1,d2,logage,x,a,zero=0.0,d,one=1.0,dz,dlam
+  CHARACTER(1) :: zstype1
+  REAL(SP) :: dumr1,d1,d2,logage,droage,x,a,zero=0.0,d,one=1.0,dz,dlam,junk
   CHARACTER(5), DIMENSION(nz) :: zlegend_str=''
   CHARACTER(5), DIMENSION(nz_xrb) :: zz_str_xrb=''
   REAL(SP), DIMENSION(nspec) :: tspec=0.
@@ -163,6 +165,18 @@ SUBROUTINE SPS_SETUP(zin)
      zmin = zin
      zmax = zin
   ENDIF
+
+  ! Read in the metallicity and helium fraction for the DRO3 isochrones
+  OPEN(90,FILE=TRIM(SPS_HOME)//'/ISOCHRONES/DRO3/zylegend.dat',&
+       STATUS='OLD',iostat=stat,ACTION='READ')
+  IF (stat.NE.0) THEN
+      WRITE(*,*) 'SPS_SETUP ERROR: zylegend.dat cannot be opened'
+      STOP
+  ENDIF
+
+  DO z=1,nz_dro 
+     READ(90,*) junk, zlegend_dro(z), ylegend_dro(z)
+  ENDDO 
 
   !----------------------------------------------------------------!
   !---------------------Read in BPASS SSPs-------------------------!
@@ -880,6 +894,65 @@ SUBROUTINE SPS_SETUP(zin)
   ENDIF
 
   ENDIF
+
+  DO z=1,nz_dro
+
+   WRITE(zstype1, '(I1)') z-1
+
+   !read in the Dorman, Rood, & O'Connell 1993 (DRO3) isochrones for extreme horizontal branch stars
+   n_isoc_dro = 0
+   OPEN(97, FILE=TRIM(SPS_HOME)//'/ISOCHRONES/DRO3/isoc_comp'//zstype1//'.dat',STATUS='OLD',&
+       IOSTAT=stat,ACTION='READ')
+
+   IF (stat.NE.0) THEN
+      WRITE(*,*) 'SPS_SETUP ERROR: DRO3 isochrone file cannot be opened'
+      STOP
+   ENDIF
+
+   DO i=1,nlines
+
+      READ(97,*,IOSTAT=stat) char
+      IF (stat.NE.0) GOTO 30
+
+      IF (char.EQ.'#') THEN
+         m = 1
+
+      ELSE
+         IF (m.EQ.1) n_isoc_dro = n_isoc_dro + 1
+         BACKSPACE(97)
+
+         IF (m.GT.nm_dro) THEN
+            WRITE(*,*) 'SPS_SETUP ERROR: number of mass points GT nm_dro'
+            STOP
+         ENDIF
+
+         READ(97,*,IOSTAT=stat) droage,mact_dro(z,n_isoc_dro,m),&
+              mc_dro(z,n_isoc_dro,m),junk,logl_dro(z,n_isoc_dro,m),&
+              logt_dro(z,n_isoc_dro,m),junk,logg_dro(z,n_isoc_dro,m),&
+              junk,junk,y_dro(z,n_isoc_dro,m),junk,z_dro(z,n_isoc_dro,m),&
+              junk,junk
+         IF (stat.NE.0) GOTO 30
+
+         IF (m.EQ.1) timestep_dro(z,n_isoc_dro) = droage
+         nmass_dro(z,n_isoc_dro) = nmass_dro(z,n_isoc_dro)+1
+
+         m = m + 1
+      ENDIF
+
+   ENDDO
+
+   WRITE(*,*) 'SPS_SETUP ERROR: didnt finish reading in the isochrones!'
+   STOP
+
+30 CONTINUE
+   CLOSE(97)
+
+   IF (n_isoc.NE.nt) THEN
+      WRITE(*,*) 'SPS_SETUP ERROR: number of isochrones NE nt',n_isoc,nt
+      STOP
+   ENDIF
+
+  ENDDO
 
   !----------------------------------------------------------------!
   !--------Read in dust emission spectra from Draine & Li----------!

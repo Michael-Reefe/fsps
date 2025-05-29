@@ -8,7 +8,7 @@ SUBROUTINE WRITE_ISOCHRONE(outfile,pset)
   USE sps_utils, ONLY : getmags,getspec,imf_weight,mod_hb,mod_gb,add_bs
   IMPLICIT NONE
 
-  INTEGER :: i,tt,zz
+  INTEGER :: i,tt,zz,bb
   TYPE(PARAMS), INTENT(in) :: pset
   CHARACTER(100), INTENT(in)  :: outfile
   CHARACTER(60)  :: fmt
@@ -19,6 +19,7 @@ SUBROUTINE WRITE_ISOCHRONE(outfile,pset)
   !temp arrays for the isochrone data
   REAL(SP), DIMENSION(nt,nm)  :: mini,mact,logl,logt,logg,&
        ffco,phase,lmdot
+  REAL(SP), DIMENSION(nt_dro,nm_dro) :: macthb,loglhb,logthb,logghb,mchb,yhb,zhb
   INTEGER, DIMENSION(nt)      :: nmass
 
   !---------------------------------------------------------------!
@@ -27,6 +28,7 @@ SUBROUTINE WRITE_ISOCHRONE(outfile,pset)
   hb_wght = 0.0
   wght    = 0.0
   zz      = pset%zmet
+  bb      = pset%bhbcomp
 
   fmt = '(F7.4,1x,F8.4,1x,F14.9,1x,F14.9,1x,7(F8.4,1x),000(F7.3,1x))'
   WRITE(fmt(47:49),'(I3,1x,I4)') nbands
@@ -47,6 +49,15 @@ SUBROUTINE WRITE_ISOCHRONE(outfile,pset)
   phase = phase_isoc(zz,:,:) !flag indicating phase of evolution
   nmass = nmass_isoc(zz,:)   !number of elements per isochrone
 
+  !do the same for the DRO3 isochrones
+  macthb = mact_dro(bb,:,:)   ! actual (present) mass
+  loglhb = logl_dro(bb,:,:)   ! log(Lbol)
+  logthb = logt_dro(bb,:,:)   ! log(Teff)
+  logghb = logg_dro(bb,:,:)   ! log(g)
+  mchb   = mc_dro(bb,:,:)     ! Yc
+  yhb    = y_dro(bb,:,:)      ! helium mass fraction
+  zhb    = z_dro(bb,:,:)      ! metal mass fraction
+
   DO tt=1,nt
 
      !compute IMF-based weights
@@ -56,7 +67,8 @@ SUBROUTINE WRITE_ISOCHRONE(outfile,pset)
      !need the hb weight for the blue stragglers too
      IF (pset%fbhb.GT.0.0.OR.pset%sbss.GT.1E-3) &
           CALL MOD_HB(pset%fbhb,tt,mini,mact,logl,logt,logg,phase,&
-          wght,hb_wght,nmass,timestep_isoc(zz,tt))
+          wght,hb_wght,nmass,timestep_isoc(zz,tt),macthb,loglhb,logthb,&
+          logghb,mchb,yhb,zhb,timestep_dro(bb,tt))
 
      !add in blue stragglers
      IF (timestep_isoc(zz,tt).GE.bhb_sbs_time.AND.pset%sbss.GT.1E-3) &
