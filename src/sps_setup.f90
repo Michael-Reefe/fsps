@@ -362,6 +362,11 @@ SUBROUTINE SPS_SETUP(zin)
          STATUS='OLD',iostat=stat1,ACTION='READ')
    OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR.logg',&
          STATUS='OLD',iostat=stat2,ACTION='READ')
+  ELSE IF (hot_spec_type.EQ.'brown') THEN 
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996.teff',&
+         STATUS='OLD',iostat=stat1,ACTION='READ')
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996.logg',&
+         STATUS='OLD',iostat=stat2,ACTION='READ')
   ENDIF
   IF (stat1.NE.0.OR.stat2.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.teff or *.logg file cannot be opened'
@@ -385,6 +390,9 @@ SUBROUTINE SPS_SETUP(zin)
   ELSE IF (hot_spec_type.EQ.'powr') THEN
    OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR_zlegend.dat',&
          STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE IF (hot_spec_type.EQ.'brown') THEN
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996_zlegend.dat',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
   ENDIF
 
   DO z=1,nzwmb
@@ -400,6 +408,9 @@ SUBROUTINE SPS_SETUP(zin)
             zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
      ELSE IF (hot_spec_type.EQ.'powr') THEN
       OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR_z'//&
+            zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+     ELSE IF (hot_spec_type.EQ.'brown') THEN
+      OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996z'//&
             zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
      ENDIF
      IF (stat.NE.0) THEN

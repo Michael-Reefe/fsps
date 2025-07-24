@@ -35,7 +35,12 @@ MODULE SPS_VARS
 !BOTH the O/B library and the Wolf-Rayet library 
 !from PoWR
 #ifndef POWR
-#define POWR 1
+#define POWR 0
+#endif
+
+!Thomas Brown et al. 1996 models
+#ifndef BROWN
+#define BROWN 1 
 #endif
 
 !enables marginalizing over the logg axis of the
@@ -346,7 +351,7 @@ MODULE SPS_VARS
   INTEGER, PARAMETER :: ndim_wr=12, nlamwr=1963, nzwr=5
 #endif
 
-  !dimensions of hot stellar grid (WMBasic, TLUSTY OSTAR/BSTAR, or PoWR)
+  !dimensions of hot stellar grid (WMBasic, TLUSTY OSTAR/BSTAR, PoWR, or Brown)
 #if (WMBASIC)
   INTEGER, PARAMETER :: ndim_wmb_logt=11,ndim_wmb_logg=3
   INTEGER, PARAMETER :: nzwmb=12, nspec_wmb=5508
@@ -359,6 +364,10 @@ MODULE SPS_VARS
   INTEGER, PARAMETER :: ndim_wmb_logt=42,ndim_wmb_logg=12
   INTEGER, PARAMETER :: nzwmb=4, nspec_wmb=23530
   CHARACTER(4), PARAMETER :: hot_spec_type = 'powr'
+#elif (BROWN)
+  INTEGER, PARAMETER :: ndim_wmb_logt=47,ndim_wmb_logg=27
+  INTEGER, PARAMETER :: nzwmb=3, nspec_wmb=23530
+  CHARACTER(5), PARAMETER :: hot_spec_type = 'brown'
 #endif 
 
   !parameters for circumstellar dust models
