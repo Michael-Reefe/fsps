@@ -34,7 +34,7 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
   !post-AGB non-LTE model spectra from Rauch 2003
   !the H-Ni composition spectra are used here.
   !this library has two Zs, Solar and 0.1Solar, simply use one or the other
-  IF (phase.EQ.6.0.AND.logt.GE.4.699) THEN
+  IF (phase.EQ.6.0.AND.logt.GE.4.699.AND.hot_spec_type.NE.'brown') THEN
     
      flag = flag+1
      jlo = MIN(MAX(locate(pagb_logt,logt),1),ndim_pagb_logt-1)
@@ -230,7 +230,8 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
      ENDIF
 
   !use WMBasic grid from JJ Eldridge for T>25,000K MS stars
-  ELSE IF (phase.EQ.0.0.AND.logt.GT.logt_cut) THEN
+  !-->use Brown 1996 grid for T>10,000K MS stars *and* for PAGB stars (in place of the Rauch 2003 grid)
+  ELSE IF ((phase.EQ.0.0.AND.logt.GT.logt_cut).OR.(phase.EQ.6.0.AND.logt.GT.4.699.AND.hot_spec_type.EQ.'brown')) THEN
 
      flag = flag+1
 
@@ -276,8 +277,13 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
 
      ENDIF
    
-     !the WMBasic library is normalized to unity
-     spec = spec*lbol
+     !all hot spectra libraries are normalized to unity, except for the Brown 1996
+     !library, which is not normalized
+     IF (hot_spec_type.NE.'brown') THEN
+          spec = spec*lbol
+     ELSE 
+          spec = 4*mypi*4*mypi*r2/lsun * spec
+     ENDIF
 
   !use the primary library for the rest of the isochrone
   ELSE
