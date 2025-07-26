@@ -187,7 +187,7 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
                logl(t,nmass(t))  = loglhb(k,jrel)      ! do the same for logL
                logt(t,nmass(t))  = logthb(k,jrel)      ! and for logTeff
                logg(t,nmass(t))  = logghb(k,jrel)      ! and for logg
-               phase(t,nmass(t)) = 8                ! FSPS default
+               phase(t,nmass(t)) = 8.0                 ! FSPS default
                !logt(t,j) = minteff                 ! this moves the original HB star to the red cloud; probably should be commented out so we dont affect the original HB stars in the new prescription
                nhbj = nhbj + 1                      ! keep track of how many new stars have been added
 

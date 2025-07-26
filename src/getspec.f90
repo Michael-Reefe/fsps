@@ -231,7 +231,8 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
 
   !use WMBasic grid from JJ Eldridge for T>25,000K MS stars
   !-->use Brown 1996 grid for T>10,000K MS stars *and* for PAGB stars (in place of the Rauch 2003 grid)
-  ELSE IF ((phase.EQ.0.0.AND.logt.GT.logt_cut).OR.(phase.EQ.6.0.AND.logt.GT.4.699.AND.hot_spec_type.EQ.'brown')) THEN
+  !-->also use Brown 1996 grid for modified horizontal branch stars (which have phase=8)
+  ELSE IF ((phase.EQ.0.0.AND.logt.GT.logt_cut).OR.(phase.EQ.6.0.AND.logt.GT.4.699.AND.hot_spec_type.EQ.'brown').OR.(phase.EQ.8.0.AND.hot_spec_type.EQ.'brown')) THEN
 
      flag = flag+1
 
