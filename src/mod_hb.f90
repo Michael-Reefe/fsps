@@ -36,7 +36,7 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
   INTEGER, PARAMETER :: nhb=10
   INTEGER :: j, i, k, jrel=0, flip=0, tnhb, w_ind, nhbj
   REAL(SP) :: tgrad=0.,hblum=-999.,minteff=1E6,mint,maxt,mzams,lzams,azams,tnow
-  REAL(SP) :: hb_wght0, hb_wght1
+  REAL(SP) :: hb_wght0, hb_wght1, hb_wght_f0, hb_wght_f1
   REAL(SP), DIMENSION(nhb) :: dumarr=0.
   LOGICAL :: do_mod
 
@@ -56,7 +56,7 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
      tnhb = 0
      minteff=1E6
      DO i=1,nm
-        IF (tphase(i).GE.3.AND.tphase(i).LE.6) THEN
+        IF (tphase(i).GE.3.0.AND.tphase(i).LE.6.0) THEN
            tnhb=tnhb+1
            hb_wght0=hb_wght0+wght(i)
            !need this delta(mass) cut to remove the stars 
@@ -174,11 +174,12 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
                !estimate the main sequence lifetime in Myr
                azams = 0.1*(1-yhb(k,jrel)-zhb(k,jrel))*0.00685*(mzams*msun)*(clight/1E8)**2 / (lzams*lsun)
                azams = azams / (3600.*24.*365.25*1e6)
-               azams = MAX(MIN(azams, 15000.), 3200.)
+               azams = MAX(MIN(azams, 13700.), 3200.)
                tnow = azams + timehb(k)
 
                !do not add a new HB star if time is not within this age bin
                IF (tnow.LT.mint.OR.tnow.GT.maxt) CYCLE  
+
                !update number of stars in the isochrone
                nmass(t) = nmass(t)+1
                !add blue HB stars (their mass and Lbol are now linked to the DRO3 isochrones)
@@ -206,17 +207,22 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
       ! 1. the relative total weights of horizontal branch stars from the original isochrones (hb_wght0) and the DRO3 ones (hb_wght1)
       ! 2. the f_bhb parameter, which should decide the relative weighting of the two populations
 
+      hb_wght_f0 = 0.
+      hb_wght_f1 = 0.
+
       !loop through all of the indices on the MIST isochrones
-      DO j=2,nm
-         IF (phase(t,j).GE.3.AND.phase(t,j).LE.6) THEN 
+      DO j=1,nm
+         IF (phase(t,j).GE.3.0.AND.phase(t,j).LE.6.0) THEN 
             !modify the weights of the original HB/AGB/PAGB stars
             IF (do_mod) wght(j) = (1-f_bhb)*wght(j)
-            hb_wght = hb_wght + wght(j)
-         ELSE IF (phase(t,j).EQ.8) THEN
+            hb_wght_f0 = hb_wght_f0 + wght(j)
+         ELSE IF (phase(t,j).EQ.8.0) THEN
             IF (do_mod) wght(j) = f_bhb*hb_wght0/hb_wght1*wght(j)
-            hb_wght = hb_wght + wght(j)
+            hb_wght_f1 = hb_wght_f1 + wght(j)
          ENDIF
       ENDDO
+
+      hb_wght = hb_wght_f0 + hb_wght_f1
 
    ENDIF
 

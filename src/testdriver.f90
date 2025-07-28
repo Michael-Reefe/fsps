@@ -7,9 +7,9 @@ program testdriver
 
     type(PARAMS) :: pset
     pset%mag_compute = 0
-    pset%bhbcomp = 1
     pset%zmet = 1
     pset%fbhb = 0.5
+    pset%bhbcomp = 8
 
     write(*,*) 'Setting up FSPS parameters'
 
@@ -17,7 +17,7 @@ program testdriver
 
     write(*,*) 'Computing isochrones...'
 
-    call write_isochrone('test.isochrone.dat', pset)
+    call write_isochrone('isochrone.bhb8.dat', pset)
 
     write(*,*) 'Finished!'
 
