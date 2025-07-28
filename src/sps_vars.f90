@@ -482,10 +482,12 @@ MODULE SPS_VARS
 
   !array holding Witt & Gordon dust models
   !wgdust(lam,tau,model,homo/clump)
-  REAL(SP), DIMENSION(nspec,18,6,2) :: wgdust=0.
+  ! REAL(SP), DIMENSION(nspec,18,6,2) :: wgdust=0.
+  REAL(SP), ALLOCATABLE :: wgdust(:,:,:,:)
 
   !array holding the Gordon et al. (2003) SMC extinction
-  REAL(SP), DIMENSION(nspec) :: g03smcextn=0.
+  ! REAL(SP), DIMENSION(nspec) :: g03smcextn=0.
+  REAL(SP), ALLOCATABLE :: g03smcextn(:)
 
   !Index for P(Z) distribution.  1=closed box;
   !P(Z) = z^zpow*exp(-z/pmetals)  (see pz_convol.f90)
@@ -500,7 +502,8 @@ MODULE SPS_VARS
   INTEGER :: ntabsfh=0
 
   !array of bandpass filters
-  REAL(SP), DIMENSION(nspec,nbands) :: bands
+  ! REAL(SP), DIMENSION(nspec,nbands) :: bands
+  REAL(SP), ALLOCATABLE :: bands(:,:)
   !magnitude of the Sun in all filters
   REAL(SP), DIMENSION(nbands) :: magsun,magvega,filter_leff
   !Vega-like star spectrum for Vega magnitude zero-point
@@ -600,7 +603,8 @@ MODULE SPS_VARS
   REAL(SP), DIMENSION(nebnip)  :: nebem_logu=0.
   !minimum resolution for nebular lines, based
   !on the resolution of the spectral libraries.
-  REAL(SP), DIMENSION(nspec)   :: neb_res_min=0.0
+  ! REAL(SP), DIMENSION(nspec)   :: neb_res_min=0.0
+  REAL(SP), ALLOCATABLE :: neb_res_min(:)
   ! REAL(SP), DIMENSION(nspec,nemline) :: gaussnebarr=0.0
   REAL(SP), ALLOCATABLE :: gaussnebarr(:,:)
 

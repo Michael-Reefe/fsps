@@ -1041,6 +1041,9 @@ SUBROUTINE SPS_SETUP(zin)
   !----------------Set up nebular emission arrays------------------!
   !----------------------------------------------------------------!
 
+  ALLOCATE(neb_res_min(nspec))
+  neb_res_min = 0.0
+
   IF (isoc_type.EQ.'mist'.OR.isoc_type.EQ.'pdva'.OR.&
      isoc_type.EQ.'prsc'.OR.isoc_type.EQ.'bpss') THEN
 
@@ -1310,6 +1313,9 @@ SUBROUTINE SPS_SETUP(zin)
   READ(99,*)
 
 
+  ALLOCATE(bands(nspec,nbands))
+  bands = 0.0
+
   !loop over all the transmission filters
   DO i=1,nbands
 
@@ -1469,6 +1475,9 @@ SUBROUTINE SPS_SETUP(zin)
   CLOSE(99)
 
   !interpolate the WG00 models onto the spectral grid
+  ALLOCATE(wgdust(nspec,18,6,2))
+  wgdust = 0.0
+
   DO k=1,2
      DO i=1,18
         DO j=1,6
@@ -1496,6 +1505,9 @@ SUBROUTINE SPS_SETUP(zin)
   ENDDO
   CLOSE(99)
   g03lam = g03lam*1E4 !convert from um to A
+
+  ALLOCATE(g03smcextn(nspec))
+  g03smcextn = 0.0
 
   DO n=1,nspec
      IF (spec_lambda(n).GT.g03lam(30)) THEN
