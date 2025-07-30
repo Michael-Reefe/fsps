@@ -305,7 +305,7 @@ MODULE SPS_VARS
   REAL(SP), PARAMETER :: zsol_spec = 0.0134
   CHARACTER(7), PARAMETER :: spec_type = 'btsettl'
   INTEGER, PARAMETER :: nzinit=7
-  INTEGER, PARAMETER :: nspec=23530
+  INTEGER, PARAMETER :: nspec=5547
 #endif
 #endif
 
@@ -327,7 +327,7 @@ MODULE SPS_VARS
   !unless you are changing the libraries
 
   !max dimension of array for each isochrone
-  INTEGER, PARAMETER :: nm=2000
+  INTEGER, PARAMETER :: nm=5000
   !max number of lines to read in
   INTEGER, PARAMETER ::  nlines=1000000
   !max number of lines in tabulated SFH, LSF
@@ -346,7 +346,7 @@ MODULE SPS_VARS
 #endif
   !number of WR spectra
 #if (POWR)
-  INTEGER, PARAMETER :: ndim_wr=17, nlamwr=23530, nzwr=4
+  INTEGER, PARAMETER :: ndim_wr=17, nlamwr=5547, nzwr=4
 #else
   INTEGER, PARAMETER :: ndim_wr=12, nlamwr=1963, nzwr=5
 #endif
@@ -358,15 +358,15 @@ MODULE SPS_VARS
   CHARACTER(7), PARAMETER :: hot_spec_type = 'wmbasic'
 #elif (TLUSTYOB)
   INTEGER, PARAMETER :: ndim_wmb_logt=26,ndim_wmb_logg=13
-  INTEGER, PARAMETER :: nzwmb=6, nspec_wmb=23530
+  INTEGER, PARAMETER :: nzwmb=6, nspec_wmb=5547
   CHARACTER(8), PARAMETER :: hot_spec_type = 'tlustyob'
 #elif (POWR)
   INTEGER, PARAMETER :: ndim_wmb_logt=42,ndim_wmb_logg=12
-  INTEGER, PARAMETER :: nzwmb=4, nspec_wmb=23530
+  INTEGER, PARAMETER :: nzwmb=4, nspec_wmb=5547
   CHARACTER(4), PARAMETER :: hot_spec_type = 'powr'
 #elif (BROWN)
   INTEGER, PARAMETER :: ndim_wmb_logt=47,ndim_wmb_logg=27
-  INTEGER, PARAMETER :: nzwmb=3, nspec_wmb=23530
+  INTEGER, PARAMETER :: nzwmb=3, nspec_wmb=5547
   CHARACTER(5), PARAMETER :: hot_spec_type = 'brown'
 #endif 
 
@@ -546,7 +546,7 @@ MODULE SPS_VARS
   !post-AGB library (Rauch 2003)
   ! REAL(SP), DIMENSION(nspec,ndim_pagb,2) :: pagb_spec=0.
 #if (IPAGB_LOGG)
-  INTEGER, PARAMETER :: nspec_pagb=23530
+  INTEGER, PARAMETER :: nspec_pagb=5547
 #else
   INTEGER, PARAMETER :: nspec_pagb=9281
 #endif
@@ -629,6 +629,20 @@ MODULE SPS_VARS
   REAL(SP), DIMENSION(nspec,ntfull,nz) :: spec_ssp_zz=0.
   REAL(SP), DIMENSION(ntfull,nz)       :: mass_ssp_zz=0.,lbol_ssp_zz=0.
   REAL(SP), DIMENSION(ntfull)          :: time_full=0.
+
+  !arrays for the full (age,metallicity,fbhb,sbss,dell,delt) dependent SSP spectra
+  !they are flattened along the metallicity,fbhb,sbss,dell,delt dimensions 
+  REAL(SP), ALLOCATABLE :: spec_ssp_itp(:,:,:)
+  REAL(SP), ALLOCATABLE :: mass_ssp_itp(:,:), lbol_ssp_itp(:,:)
+  !and more arrays that are further flattened along the time dimension
+  REAL(SP), ALLOCATABLE :: spec_ssp_itp_flat(:,:)
+  REAL(SP), ALLOCATABLE :: mass_ssp_itp_flat(:), lbol_ssp_itp_flat(:)
+ 
+  INTEGER, PARAMETER :: nfbhb=4, nsbss=4, ndell=3, ndelt=3
+  REAL(SP), DIMENSION(nfbhb) :: fbhb_legend = (/ 0., 0.01, 0.1, 0.5 /)
+  REAL(SP), DIMENSION(nsbss) :: sbss_legend = (/ 0., 3.33, 6.67, 10. /)
+  REAL(SP), DIMENSION(ndell) :: dell_legend = (/ -0.4, 0., 0.4 /)
+  REAL(SP), DIMENSION(ndelt) :: delt_legend = (/ -0.2, 0., 0.2 /)
 
   !array for ssp weights
   REAL(SP), DIMENSION(ntfull,nz)       :: weight_ssp=0.

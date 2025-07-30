@@ -380,4 +380,26 @@ MODULE SPS_UTILS
      END SUBROUTINE ZTINTERP
   END INTERFACE
 
+  INTERFACE 
+     SUBROUTINE ZFINTERP(zpos,fbhbpos,sbsspos,dellpos,deltpos,spec,lbol,mass,tpos)
+       USE sps_vars
+       REAL(SP),INTENT(in) :: zpos, fbhbpos, sbsspos, dellpos, deltpos 
+       REAL(SP),INTENT(in),OPTIONAL :: tpos
+       REAL(SP),INTENT(inout),DIMENSION(:) :: mass, lbol 
+       REAL(SP),INTENT(inout),DIMENSION(:,:) :: spec
+     END SUBROUTINE ZFINTERP
+  END INTERFACE
+
+  INTERFACE 
+     FUNCTION NDINTERPOLATE(narg,arg,nent,ent,table)
+       USE sps_vars
+       real(SP) :: ndinterpolate 
+       integer,intent(in) :: narg  
+       integer,dimension(narg),intent(in) :: nent  
+       real(SP),dimension(narg),intent(in) :: arg  
+       real(SP),dimension(:),intent(in) :: ent  
+       real(SP),dimension(:),intent(in) :: table
+     END FUNCTION NDINTERPOLATE
+  END INTERFACE
+
 END MODULE SPS_UTILS
