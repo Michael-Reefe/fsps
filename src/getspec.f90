@@ -230,9 +230,11 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
      ENDIF
 
   !use WMBasic grid from JJ Eldridge for T>25,000K MS stars
-  !-->use Brown 1996 grid for T>10,000K MS stars *and* for PAGB stars (in place of the Rauch 2003 grid)
-  !-->also use Brown 1996 grid for modified horizontal branch stars (which have phase=8)
-  ELSE IF ((phase.EQ.0.0.AND.logt.GT.logt_cut).OR.(phase.EQ.6.0.AND.logt.GT.4.699.AND.hot_spec_type.EQ.'brown').OR.(phase.EQ.8.0.AND.hot_spec_type.EQ.'brown')) THEN
+  !--> use Brown 1996 grid for T>10,000K MS stars, modified HB and BS stars, and for PAGB stars (in place of the Rauch 2003 grid)
+  ELSE IF ((phase.EQ.0.0.AND.logt.GT.logt_cut)&
+     .OR.(phase.EQ.6.0.AND.logt.GT.4.699.AND.hot_spec_type.EQ.'brown')&
+     .OR.(phase.EQ.7.0.AND.logt.GT.logt_cut.AND.hot_spec_type.EQ.'brown')&
+     .OR.(phase.EQ.8.0.AND.logt.GT.logt_cut.AND.hot_spec_type.EQ.'brown')) THEN
 
      flag = flag+1
 
@@ -240,7 +242,7 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
      klo = MIN(MAX(locate(wmb_logg,loggi),1),ndim_wmb_logg-1)
      t   = (logt-wmb_logt(jlo)) / (wmb_logt(jlo+1)-wmb_logt(jlo))
      t   = MIN(MAX(t,0.0),1.0) !no extrapolation (this means >50K -> 50K)
-     u   = (loggi-wmb_logg(klo))  / (wmb_logg(klo+1)-wmb_logg(klo))
+     u   = (loggi-wmb_logg(klo)) / (wmb_logg(klo+1)-wmb_logg(klo))
      u   = MIN(MAX(u,0.0),1.0) !no extrapolation in logg
 
      test1 = wmb_spec(whlam5000,pset%zmet,jlo,klo)
