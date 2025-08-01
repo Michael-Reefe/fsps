@@ -1,99 +1,68 @@
+!Copyright 2024 Paolo Lampitella
+!This code is licensed under the terms of the MIT license
 
-! from:
-! https://degenerateconic.com/multidimensional-linear-interpolation.html
+FUNCTION ndinterpolate(ndim,x,ng,grid,values)
+!Multilinear interpolation in ndim dimensions
+USE sps_vars
+IMPLICIT NONE
+INTEGER, INTENT(IN) :: ndim     !Number of dimensions
+INTEGER, INTENT(IN) :: ng(ndim) !Number of points along each dimension (i.e., [nx, ny, ...])
+REAL(SP),     INTENT(IN) :: x(ndim)  !The interpolation point
+REAL(SP),     INTENT(IN) :: grid(SUM(ng)) !Coordinates, one dimension after the other (i.e., [x(:), y(:), ...])
+REAL(SP),     INTENT(IN) :: values(PRODUCT(ng)) !Tabulated values, linearized in column major format
+REAL(SP)     :: ndinterpolate, eta(2,ndim), wei, xb
+INTEGER :: ind(ndim), i, j0, j1, j2, j
+INTEGER :: kp, ki, ks, delta, middle
 
-function ndinterpolate(narg,arg,nent,ent,table)
+!Loop to find the cell (hypercube) of the table containing the interplation point x
+!and compute the resulting interpolation factors eta
+j0 = 0
+DO i = 1, ndim
+   j1     = j0 + 1
+   j2     = j0 + ng(i)
+   xb     = MIN(MAX(x(i),grid(j1)),grid(j2)) !Clipping the interpolation point to the grid
+   !Binary search to find the cell containing xb
+   DO
+      delta  = j2-j1
+      IF (delta<=1) EXIT
+      middle = j1+delta/2
+      IF (xb>grid(middle)) THEN
+         j1  = middle
+      ELSE
+         j2 = middle
+      ENDIF
+   ENDDO
+   ind(i)   = j1 - j0   !Index of the cell containing xb
+   eta(2,i) = (xb - grid(j1))/(grid(j1+1)-grid(j1)) !Using x(i) here (instead of xb) performs extrapolation
+   eta(1,i) = 1.0_SP-eta(2,i)
+   j0       = j0 + ng(i)
+ENDDO
 
-use sps_vars
-implicit none
+ndinterpolate = 0.0_SP
+!Loop over all the 2^ndim vertices of the cell containing the point
+DO j  = 1, 2**ndim
+   wei = 1.0_SP
+   kp  = 1
+   ki  = 1
+   !Loop over the dimensions to retrieve the index and weight of the given node
+   !We use the j bit pattern (which is made of ndim bits) to pick the lower/upper node in
+   !each dimension of the given cell
+   DO i = 1, ndim
+      !This magic number will give 1 if the (i-1)-th bit of j-1 is set, 0  otherwise
+      !It is derived from a more general formula for computing permutations with repetitions
+      ks = MOD((2*j-1)/2**i,2)
 
-real(SP) :: ndinterpolate  
-integer,intent(in) :: narg  
-integer,dimension(narg),intent(in) :: nent  
-real(SP),dimension(narg),intent(in) :: arg  
-real(SP),dimension(:),intent(in) :: ent  
-real(SP),dimension(:),intent(in) :: table
+      !Retrieve and use the weight for the i-th dimension of the j-th vertex
+      wei = wei*eta(1+ks,i)
 
-integer,dimension(2**narg) :: index  
-real(SP),dimension(2**narg) :: weight  
-logical :: mflag,rflag  
-real(SP) :: eta,h,x  
-integer :: i,ishift,istep,k,knots,lgfile,&  
-           lmax,lmin,loca,locb,locc,ndim
-
-!some error checks:  
-if (size(ent)/=sum(nent)) &  
-    error stop 'size of ent is incorrect.'  
-if (size(table)/=product(nent)) &  
-    error stop 'size of table is incorrect.'  
-if (narg<1) &  
-    error stop 'invalid value of narg.'
-
-lmax = 0  
-istep = 1  
-knots = 1  
-index(1) = 1  
-weight(1) = 1.0_SP
-
-main: do i = 1 , narg  
-    x = arg(i)  
-    ndim = nent(i)  
-    loca = lmax  
-    lmin = lmax + 1  
-    lmax = lmax + ndim  
-    if ( ndim>2 ) then  
-        locb = lmax + 1  
-        do  
-            locc = (loca+locb)/2  
-            if ( x<ent(locc) ) then  
-                locb = locc  
-            else if ( x==ent(locc) ) then  
-                ishift = (locc-lmin)*istep  
-                do k = 1 , knots  
-                    index(k) = index(k) + ishift  
-                end do  
-                istep = istep*ndim  
-                cycle main  
-                else  
-                loca = locc  
-            end if  
-            if ( locb-loca<=1 ) exit  
-        end do  
-        loca = min(max(loca,lmin),lmax-1)  
-        ishift = (loca-lmin)*istep  
-        eta = (x-ent(loca))/(ent(loca+1)-ent(loca))  
-    else  
-        if ( ndim==1 ) cycle main  
-        h = x - ent(lmin)  
-        if ( h==0.0_SP ) then  
-            istep = istep*ndim  
-            cycle main  
-        end if  
-        ishift = istep  
-        if ( x-ent(lmin+1)==0.0_SP ) then  
-            do k = 1 , knots  
-                index(k) = index(k) + ishift  
-            end do  
-            istep = istep*ndim  
-            cycle main  
-        end if  
-        ishift = 0  
-        eta = h/(ent(lmin+1)-ent(lmin))  
-    end if  
-    do k = 1 , knots  
-        index(k) = index(k) + ishift  
-        index(k+knots) = index(k) + istep  
-        weight(k+knots) = weight(k)*eta  
-        weight(k) = weight(k) - weight(k+knots)  
-    end do  
-    knots = 2*knots  
-    istep = istep*ndim  
-end do main
-
-ndinterpolate = 0.0_SP  
-do k = 1 , knots  
-    i = index(k)  
-    ndinterpolate = ndinterpolate + weight(k)*table(i)  
-end do
-
-end function ndinterpolate 
+      !This is just the i-th step of sub2ind applied to sub(i)=ind(i)+ks which, in the end, returns
+      !the linear index ki corresponding to subscripts sub(i) for a ndim-dimensional array
+      !stored in column-major order (as it is values). It is defined as:
+      !ki - 1 = SUM_i((sub(i)-1)*PROD_j(ng(j),j=1...i-1),i=1...ndim)
+      ki = ki + (ind(i)+ks-1)*kp
+      kp = kp*ng(i)
+   ENDDO
+   !Summing up this vertex contribution to the final interpolation
+   ndinterpolate = ndinterpolate + wei*values(ki)
+ENDDO
+ENDFUNCTION ndinterpolate

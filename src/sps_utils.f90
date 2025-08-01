@@ -391,15 +391,16 @@ MODULE SPS_UTILS
   END INTERFACE
 
   INTERFACE 
-     FUNCTION NDINTERPOLATE(narg,arg,nent,ent,table)
-       USE sps_vars
-       real(SP) :: ndinterpolate 
-       integer,intent(in) :: narg  
-       integer,dimension(narg),intent(in) :: nent  
-       real(SP),dimension(narg),intent(in) :: arg  
-       real(SP),dimension(:),intent(in) :: ent  
-       real(SP),dimension(:),intent(in) :: table
-     END FUNCTION NDINTERPOLATE
+    FUNCTION NDINTERPOLATE(ndim,x,ng,grid,values)
+      !Multilinear interpolation in ndim dimensions
+      USE sps_vars
+      INTEGER, INTENT(IN) :: ndim     !Number of dimensions
+      INTEGER, INTENT(IN) :: ng(ndim) !Number of points along each dimension (i.e., [nx, ny, ...])
+      REAL(SP),INTENT(IN) :: x(ndim)  !The interpolation point
+      REAL(SP),INTENT(IN) :: grid(SUM(ng)) !Coordinates, one dimension after the other (i.e., [x(:), y(:), ...])
+      REAL(SP),INTENT(IN) :: values(PRODUCT(ng)) !Tabulated values, linearized in column major format
+      REAL(SP) :: ndinterpolate
+    END FUNCTION NDINTERPOLATE
   END INTERFACE
 
 END MODULE SPS_UTILS

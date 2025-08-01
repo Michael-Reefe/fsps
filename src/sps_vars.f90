@@ -632,11 +632,8 @@ MODULE SPS_VARS
 
   !arrays for the full (age,metallicity,fbhb,sbss,dell,delt) dependent SSP spectra
   !they are flattened along the metallicity,fbhb,sbss,dell,delt dimensions 
-  REAL(SP), ALLOCATABLE :: spec_ssp_itp(:,:,:)
-  REAL(SP), ALLOCATABLE :: mass_ssp_itp(:,:), lbol_ssp_itp(:,:)
-  !and more arrays that are further flattened along the time dimension
-  REAL(SP), ALLOCATABLE :: spec_ssp_itp_flat(:,:)
-  REAL(SP), ALLOCATABLE :: mass_ssp_itp_flat(:), lbol_ssp_itp_flat(:)
+  REAL(SP), ALLOCATABLE :: spec_ssp_itp(:,:,:,:,:,:,:)
+  REAL(SP), ALLOCATABLE :: mass_ssp_itp(:,:,:,:,:,:), lbol_ssp_itp(:,:,:,:,:,:)
  
   INTEGER, PARAMETER :: nfbhb=4, nsbss=4, ndell=3, ndelt=3
   REAL(SP), DIMENSION(nfbhb) :: fbhb_legend = (/ 0., 0.01, 0.1, 0.5 /)
