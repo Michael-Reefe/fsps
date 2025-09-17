@@ -322,10 +322,10 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
      
      !all hot spectra libraries are normalized to unity, except for the Brown 1996
      !library, which is not normalized
-     IF (hot_spec_type.NE.'brown'.AND.hot_spec_type.NE.'brnob') THEN
-          spec = spec*lbol
-     ELSE 
+     IF (hot_spec_type.EQ.'brown'.OR.(hot_spec_type.EQ.'brnob'.AND.do_brnob)) THEN
           spec = 4*mypi*4*mypi*r2/lsun * spec
+     ELSE
+          spec = spec*lbol
      ENDIF
 
   !use the primary library for the rest of the isochrone

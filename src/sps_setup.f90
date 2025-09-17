@@ -410,7 +410,7 @@ SUBROUTINE SPS_SETUP(zin)
      IF (hot_spec_type.EQ.'wmbasic') THEN
       OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC_z'//&
             zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
-     ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
+     ELSE IF (hot_spec_type.EQ.'tlustyob'.OR.hot_spec_type.EQ.'brnob') THEN
       OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOBz'//&
             zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
      ELSE IF (hot_spec_type.EQ.'powr') THEN
