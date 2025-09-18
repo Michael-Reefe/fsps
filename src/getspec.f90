@@ -17,7 +17,6 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
   REAL(SP), DIMENSION(nspec) :: ispec
   REAL(SP) :: t,u,r2,test1,test2,test3,test4,loggi,teffi,rwr,twr,logt_cut
   INTEGER  :: klo,jlo,mlo,flag
-  LOGICAL  :: do_brnob
 
   !---------------------------------------------------------------!
   !---------------------------------------------------------------!
@@ -35,9 +34,7 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
   !post-AGB non-LTE model spectra from Rauch 2003
   !the H-Ni composition spectra are used here.
   !this library has two Zs, Solar and 0.1Solar, simply use one or the other
-  IF (phase.EQ.6.0.AND.logt.GE.4.699&
-      .AND.hot_spec_type.NE.'brown'&
-      .AND.hot_spec_type.NE.'brnob') THEN
+  IF (phase.EQ.6.0.AND.logt.GE.4.699.AND.hot_spec_type.NE.'brown') THEN
     
      flag = flag+1
      jlo = MIN(MAX(locate(pagb_logt,logt),1),ndim_pagb_logt-1)
@@ -235,9 +232,9 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
   !use WMBasic grid from JJ Eldridge for T>25,000K MS stars
   !--> use Brown 1996 grid for T>10,000K MS stars, modified HB and BS stars, and for PAGB stars (in place of the Rauch 2003 grid)
   ELSE IF ((phase.EQ.0.0.AND.logt.GT.logt_cut)&
-     .OR.(phase.EQ.6.0.AND.logt.GT.4.699.AND.(hot_spec_type.EQ.'brown'.OR.hot_spec_type.EQ.'brnob'))&
-     .OR.(phase.EQ.7.0.AND.logt.GT.logt_cut.AND.(hot_spec_type.EQ.'brown'.OR.hot_spec_type.EQ.'brnob'))&
-     .OR.(phase.EQ.8.0.AND.logt.GT.logt_cut.AND.(hot_spec_type.EQ.'brown'.OR.hot_spec_type.EQ.'brnob'))) THEN
+     .OR.(phase.EQ.6.0.AND.logt.GT.4.699.AND.hot_spec_type.EQ.'brown')&
+     .OR.(phase.EQ.7.0.AND.logt.GT.logt_cut.AND.hot_spec_type.EQ.'brown')&
+     .OR.(phase.EQ.8.0.AND.logt.GT.logt_cut.AND.hot_spec_type.EQ.'brown')) THEN
 
      flag = flag+1
 
@@ -255,78 +252,36 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
 
      !if all four components are zero, set the flag to zero
      IF ((test1.LE.tiny30.AND.test2.LE.tiny30.AND.&
-          test3.LE.tiny30.AND.test4.LE.tiny30)) flag=0 
-
-     !if using brnob mode and the spectra is outside the TLUSTYOB range, use the Brown grid
-     do_brnob = .false.
-     IF (flag.EQ.0.AND.hot_spec_type.EQ.'brnob') THEN 
-          flag = flag+1
-
-          jlo = MIN(MAX(locate(wmb2_logt,logt),1),ndim_wmb2_logt-1)
-          klo = MIN(MAX(locate(wmb2_logg,loggi),1),ndim_wmb2_logg-1)
-          t   = (logt-wmb2_logt(jlo)) / (wmb2_logt(jlo+1)-wmb2_logt(jlo))
-          t   = MIN(MAX(t,0.0),1.0) !no extrapolation (this means >50K -> 50K)
-          u   = (loggi-wmb2_logg(klo)) / (wmb2_logg(klo+1)-wmb2_logg(klo))
-          u   = MIN(MAX(u,0.0),1.0) !no extrapolation in logg
-
-          test1 = wmb2_spec(whlam5000,pset%zmet,jlo,klo)
-          test2 = wmb2_spec(whlam5000,pset%zmet,jlo+1,klo)
-          test3 = wmb2_spec(whlam5000,pset%zmet,jlo,klo+1)
-          test4 = wmb2_spec(whlam5000,pset%zmet,jlo+1,klo+1)
-
-          IF ((test1.LE.tiny30.AND.test2.LE.tiny30.AND.&
-               test3.LE.tiny30.AND.test4.LE.tiny30)) flag=0
-          
-          do_brnob = .true.
-     ENDIF
+          test3.LE.tiny30.AND.test4.LE.tiny30)) flag=0
 
      !catch stars that fall off part of the grid
      !the flux at 5000A should never be zero unless a spec is missing
      IF ((test1.LE.tiny30.OR.test2.LE.tiny30.OR.&
           test3.LE.tiny30.OR.test4.LE.tiny30).AND.flag.EQ.1) THEN
 
-     IF (verbose.EQ.99) & 
-          WRITE(*,'(" GETSPEC WARNING: Part of the '//&
-          'point is off the grid: Z=",I2,'//&
-          '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
-          pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
+        IF (verbose.EQ.99) & 
+             WRITE(*,'(" GETSPEC WARNING: Part of the '//&
+             'point is off the grid: Z=",I2,'//&
+             '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
+             pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
 
-     !this is a very crude hack.  just pick one of the spectra
-     IF (do_brnob) THEN 
-          IF (test1.GT.tiny30) spec = wmb2_spec(:,pset%zmet,jlo,klo)
-          IF (test2.GT.tiny30) spec = wmb2_spec(:,pset%zmet,jlo+1,klo)
-          IF (test3.GT.tiny30) spec = wmb2_spec(:,pset%zmet,jlo,klo+1)
-          IF (test4.GT.tiny30) spec = wmb2_spec(:,pset%zmet,jlo+1,klo+1)
-     ELSE
-          IF (test1.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo)
-          IF (test2.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo)
-          IF (test3.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo+1)
-          IF (test4.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo+1)
-     ENDIF
+        !this is a very crude hack.  just pick one of the spectra
+        IF (test1.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo)
+        IF (test2.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo)
+        IF (test3.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo+1)
+        IF (test4.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo+1)
 
      ELSE
 
-     IF (do_brnob) THEN 
-          spec = (1-t)*(1-u)*wmb2_spec(:,pset%zmet,jlo,klo) + &
-               t*(1-u)*wmb2_spec(:,pset%zmet,jlo+1,klo) + &
-               t*u*wmb2_spec(:,pset%zmet,jlo+1,klo+1) + &
-               (1-t)*u*wmb2_spec(:,pset%zmet,jlo,klo+1)
-     ELSE
-          spec = (1-t)*(1-u)*wmb_spec(:,pset%zmet,jlo,klo) + &
-               t*(1-u)*wmb_spec(:,pset%zmet,jlo+1,klo) + &
-               t*u*wmb_spec(:,pset%zmet,jlo+1,klo+1) + &
-               (1-t)*u*wmb_spec(:,pset%zmet,jlo,klo+1)
-     ENDIF
+      spec = (1-t)*(1-u)*wmb_spec(:,pset%zmet,jlo,klo) + &
+            t*(1-u)*wmb_spec(:,pset%zmet,jlo+1,klo) + &
+            t*u*wmb_spec(:,pset%zmet,jlo+1,klo+1) + &
+            (1-t)*u*wmb_spec(:,pset%zmet,jlo,klo+1)
 
      ENDIF
-     
-     !all hot spectra libraries are normalized to unity, except for the Brown 1996
-     !library, which is not normalized
-     IF (hot_spec_type.EQ.'brown'.OR.(hot_spec_type.EQ.'brnob'.AND.do_brnob)) THEN
-          spec = 4*mypi*4*mypi*r2/lsun * spec
-     ELSE
-          spec = spec*lbol
-     ENDIF
+   
+     !all hot spectra libraries are normalized to unity
+     spec = spec*lbol
 
   !use the primary library for the rest of the isochrone
   ELSE

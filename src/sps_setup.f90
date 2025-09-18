@@ -52,16 +52,9 @@ SUBROUTINE SPS_SETUP(zin)
   REAL(SP), DIMENSION(nzwmb)     :: zwmb=0.
   REAL(SP), DIMENSION(nspec_wmb) :: wmb_lam=0.
   REAL(SP), DIMENSION(nspec_wmb,ndim_wmb_logt,ndim_wmb_logg) :: wmb_specinit=0.
-
-  REAL(SP), DIMENSION(nspec,nzwmb2,ndim_wmb2_logt,ndim_wmb2_logg) :: wmb2si=0.
-  REAL(SP), DIMENSION(nzwmb2)     :: zwmb2=0.
-  REAL(SP), DIMENSION(nspec_wmb2) :: wmb2_lam=0.
-  REAL(SP), DIMENSION(nspec_wmb2,ndim_wmb2_logt,ndim_wmb2_logg) :: wmb2_specinit=0.
-
   REAL(SP), DIMENSION(ntabmax)   :: lsflam=0.,lsfsig=0.
   REAL(SP), DIMENSION(30) :: g03lam=0., g03smc=0.
   REAL(SP), DIMENSION(nspec_xrb) :: tspec_xrb
-
 
   !---------------------------------------------------------------!
   !---------------------------------------------------------------!
@@ -359,7 +352,7 @@ SUBROUTINE SPS_SETUP(zin)
          STATUS='OLD',iostat=stat1,ACTION='READ')
    OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC.logg',&
          STATUS='OLD',iostat=stat2,ACTION='READ')
-  ELSE IF (hot_spec_type.EQ.'tlustyob'.OR.hot_spec_type.EQ.'brnob') THEN
+  ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
    OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOB.teff',&
          STATUS='OLD',iostat=stat1,ACTION='READ')
    OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOB.logg',&
@@ -391,7 +384,7 @@ SUBROUTINE SPS_SETUP(zin)
   IF (hot_spec_type.EQ.'wmbasic') THEN
    OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC_zlegend.dat',&
          STATUS='OLD',iostat=stat,ACTION='READ')
-  ELSE IF (hot_spec_type.EQ.'tlustyob'.OR.hot_spec_type.EQ.'brnob') THEN
+  ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
    OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOB_zlegend.dat',&
          STATUS='OLD',iostat=stat,ACTION='READ')
   ELSE IF (hot_spec_type.EQ.'powr') THEN
@@ -410,7 +403,7 @@ SUBROUTINE SPS_SETUP(zin)
      IF (hot_spec_type.EQ.'wmbasic') THEN
       OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC_z'//&
             zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
-     ELSE IF (hot_spec_type.EQ.'tlustyob'.OR.hot_spec_type.EQ.'brnob') THEN
+     ELSE IF (hot_spec_type.EQ.'tlustyob') THEN
       OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/TLUSTY_OB/TLUSTYOBz'//&
             zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
      ELSE IF (hot_spec_type.EQ.'powr') THEN
@@ -463,82 +456,6 @@ SUBROUTINE SPS_SETUP(zin)
      wmb_spec(:,z,:,:) = 10**wmb_spec(:,z,:,:)
 
   ENDDO
-
-
-  IF (hot_spec_type.EQ.'brnob') THEN
-
-   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996.teff',&
-         STATUS='OLD',iostat=stat1,ACTION='READ')
-   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996.logg',&
-         STATUS='OLD',iostat=stat2,ACTION='READ')
-   IF (stat1.NE.0.OR.stat2.NE.0) THEN
-      WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.teff or *.logg file cannot be opened'
-      STOP
-   ENDIF
-   DO i=1,ndim_wmb2_logt
-      READ(93,*) wmb2_logt(i)
-   ENDDO
-   DO i=1,ndim_wmb2_logg
-      READ(94,*) wmb2_logg(i)
-   ENDDO
-   CLOSE(93)
-   CLOSE(94)
-
-   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996_zlegend.dat',&
-         STATUS='OLD',iostat=stat,ACTION='READ')
-   
-   DO z=1,nzwmb2
-
-      READ(93,*) zwmb2(z)
-      WRITE(zstype,'(F6.4)') zwmb2(z)
-      OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996z'//&
-            zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
-      IF (stat.NE.0) THEN
-         WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.spec cannot be opened'
-         STOP
-      ENDIF
-      DO i=1,nspec_wmb2
-         READ(95,*) wmb2_lam(i), (wmb2_specinit(i,:,j), j=1,ndim_wmb2_logg)
-      ENDDO
-      CLOSE(95)
-
-      !interpolate to the main spectral grid
-      !NB: should be smoothing the models first to the resolution of the
-      !input spectral grid
-      DO i=1,ndim_wmb2_logt
-         DO j=1,ndim_wmb2_logg
-            wmb2si(:,z,i,j) = MAX(linterparr(wmb2_lam,wmb2_specinit(:,i,j),&
-                  spec_lambda),tiny_number)
-         ENDDO
-      ENDDO
-
-   ENDDO
-
-   CLOSE(93)
-
-   ALLOCATE(wmb2_spec(nspec,nz,ndim_wmb2_logt,ndim_wmb2_logg))
-   wmb2_spec = 0.0
-
-   !Now interpolate the input spectral library to the isochrone grid
-   !notice that we're interpolating at fixed Z/Zsol even in cases
-   !where the isochrones and spectra might have different Zsol. This might
-   !in fact be the best thing to do.  Either way, its not ideal.
-   DO z=1,nz
-
-      i1 = MIN(MAX(locate(LOG10(zwmb2/zsol_spec),&
-            LOG10(zlegend(z)/zsol)),1),nzwmb2-1)
-      dz = (LOG10(zlegend(z)/zsol)-LOG10(zwmb2(i1)/zsol_spec)) / &
-            (LOG10(zwmb2(i1+1)/zsol_spec)-LOG10(zwmb2(i1)/zsol_spec))
-      dz = MIN(MAX(dz,0.0),1.0) !no extrapolation!
-
-      wmb2_spec(:,z,:,:) = (1-dz)*LOG10(wmb2si(:,i1,:,:)+tiny_number) + &
-            dz*LOG10(wmb2si(:,i1+1,:,:)+tiny_number)
-      wmb2_spec(:,z,:,:) = 10**wmb2_spec(:,z,:,:)
-
-   ENDDO
-
-  ENDIF
-
 
   !-----------Read in TP-AGB Library from Lancon & Wood------------;
 

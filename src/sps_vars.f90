@@ -40,12 +40,7 @@ MODULE SPS_VARS
 
 !Thomas Brown et al. 1996 models
 #ifndef BROWN
-#define BROWN 0 
-#endif
-
-!A combination of Brown et al. 1996 models and TLUSTY OB models
-#ifndef BRNOB
-#define BRNOB 1
+#define BROWN 1
 #endif
 
 !enables marginalizing over the logg axis of the
@@ -360,33 +355,19 @@ MODULE SPS_VARS
 #if (WMBASIC)
   INTEGER, PARAMETER :: ndim_wmb_logt=11,ndim_wmb_logg=3
   INTEGER, PARAMETER :: nzwmb=12, nspec_wmb=5508
-  INTEGER, PARAMETER :: ndim_wmb2_logt=0,ndim_wmb2_logg=0
-  INTEGER, PARAMETER :: nzwmb2=0, nspec_wmb2=0
   CHARACTER(7), PARAMETER :: hot_spec_type = 'wmbasic'
 #elif (TLUSTYOB)
   INTEGER, PARAMETER :: ndim_wmb_logt=26,ndim_wmb_logg=13
   INTEGER, PARAMETER :: nzwmb=6, nspec_wmb=5547
-  INTEGER, PARAMETER :: ndim_wmb2_logt=0,ndim_wmb2_logg=0
-  INTEGER, PARAMETER :: nzwmb2=0, nspec_wmb2=0
   CHARACTER(8), PARAMETER :: hot_spec_type = 'tlustyob'
 #elif (POWR)
   INTEGER, PARAMETER :: ndim_wmb_logt=42,ndim_wmb_logg=12
   INTEGER, PARAMETER :: nzwmb=4, nspec_wmb=5547
-  INTEGER, PARAMETER :: ndim_wmb2_logt=0,ndim_wmb2_logg=0
-  INTEGER, PARAMETER :: nzwmb2=0, nspec_wmb2=0
   CHARACTER(4), PARAMETER :: hot_spec_type = 'powr'
 #elif (BROWN)
   INTEGER, PARAMETER :: ndim_wmb_logt=47,ndim_wmb_logg=27
   INTEGER, PARAMETER :: nzwmb=3, nspec_wmb=5547
-  INTEGER, PARAMETER :: ndim_wmb2_logt=0,ndim_wmb2_logg=0
-  INTEGER, PARAMETER :: nzwmb2=0, nspec_wmb2=0
   CHARACTER(5), PARAMETER :: hot_spec_type = 'brown'
-#elif (BRNOB)
-  INTEGER, PARAMETER :: ndim_wmb_logt=26,ndim_wmb_logg=13
-  INTEGER, PARAMETER :: nzwmb=6, nspec_wmb=5547
-  INTEGER, PARAMETER :: ndim_wmb2_logt=47,ndim_wmb2_logg=27
-  INTEGER, PARAMETER :: nzwmb2=3, nspec_wmb2=5547
-  CHARACTER(5), PARAMETER :: hot_spec_type = 'brnob'
 #endif 
 
   !parameters for circumstellar dust models
@@ -547,11 +528,8 @@ MODULE SPS_VARS
   !arrays for the WMBasic grid
   REAL(SP), DIMENSION(ndim_wmb_logt) :: wmb_logt=0.
   REAL(SP), DIMENSION(ndim_wmb_logg) :: wmb_logg=0.
-  REAL(SP), DIMENSION(ndim_wmb2_logt) :: wmb2_logt=0.
-  REAL(SP), DIMENSION(ndim_wmb2_logg) :: wmb2_logg=0.
   ! REAL(KIND(1.0)), DIMENSION(nspec,nz,ndim_wmb_logt,ndim_wmb_logg) :: wmb_spec=0.
   REAL(KIND(1.0)), ALLOCATABLE :: wmb_spec(:,:,:,:)
-  REAL(KIND(1.0)), ALLOCATABLE :: wmb2_spec(:,:,:,:)
 
   !AGB library (Lancon & Mouhcine 2002)
   ! REAL(SP), DIMENSION(nspec,n_agb_o) :: agb_spec_o=0.
