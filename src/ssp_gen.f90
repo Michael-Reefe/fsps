@@ -35,7 +35,7 @@ SUBROUTINE SSP_GEN(pset,mass_ssp,lbol_ssp,spec_ssp)
   REAL(SP), DIMENSION(nt,nm) :: mini,mact,logl,logt,logg,&
        ffco,phase,lmdot
   !same for the DRO3 isochrones
-  REAL(SP), DIMENSION(nt_dro,nm_dro) :: macthb,loglhb,logthb,logghb,mchb,yhb,zhb
+  REAL(SP), DIMENSION(nt_dro,nm_dro) :: macthb,minihb,loglhb,logthb,logghb,mchb,yhb,zhb
 
   !arrays holding the number of mass elements for each
   !isochrone and the age of each isochrone
@@ -130,6 +130,7 @@ SUBROUTINE SSP_GEN(pset,mass_ssp,lbol_ssp,spec_ssp)
 
      !do the same for the DRO3 isochrones
      macthb = mact_dro(pset%bhbcomp,:,:)   ! actual (present) mass
+     minihb = mini_dro(pset%bhbcomp,:,:)   ! initial mass
      loglhb = logl_dro(pset%bhbcomp,:,:)   ! log(Lbol)
      logthb = logt_dro(pset%bhbcomp,:,:)   ! log(Teff)
      logghb = logg_dro(pset%bhbcomp,:,:)   ! log(g)
@@ -180,7 +181,7 @@ SUBROUTINE SSP_GEN(pset,mass_ssp,lbol_ssp,spec_ssp)
         !need the hb weight for the blue stragglers too
         IF (pset%fbhb.GT.0.0.OR.pset%sbss.GT.1E-3) &
              CALL MOD_HB(pset%fbhb,i,mini,mact,logl,logt,logg,phase,&
-             wght,hb_wght,nmass,time(i),macthb,loglhb,logthb,logghb,mchb,&
+             wght,hb_wght,nmass,time(i),macthb,minihb,loglhb,logthb,logghb,mchb,&
              yhb,zhb,timehb)
 
         !add in blue stragglers

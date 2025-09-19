@@ -912,7 +912,7 @@ SUBROUTINE SPS_SETUP(zin)
 
    !read in the Dorman, Rood, & O'Connell 1993 (DRO3) isochrones for extreme horizontal branch stars
    n_isoc_dro = 0
-   OPEN(97, FILE=TRIM(SPS_HOME)//'/ISOCHRONES/DRO3/isoc_comp'//zstype1//'.dat',STATUS='OLD',&
+   OPEN(97, FILE=TRIM(SPS_HOME)//'/ISOCHRONES/DRO3/isoc_comp'//zstype1//'_resamp.dat',STATUS='OLD',&
        IOSTAT=stat,ACTION='READ')
 
    IF (stat.NE.0) THEN
@@ -938,10 +938,10 @@ SUBROUTINE SPS_SETUP(zin)
          ENDIF
 
          READ(97,*,IOSTAT=stat) droage,mact_dro(z,n_isoc_dro,m),&
-              mc_dro(z,n_isoc_dro,m),junk,logl_dro(z,n_isoc_dro,m),&
-              logt_dro(z,n_isoc_dro,m),junk,logg_dro(z,n_isoc_dro,m),&
-              junk,junk,y_dro(z,n_isoc_dro,m),junk,z_dro(z,n_isoc_dro,m),&
-              junk,junk
+              mc_dro(z,n_isoc_dro,m),junk,mini_dro(z,n_isoc_dro,m),&
+              logl_dro(z,n_isoc_dro,m),logt_dro(z,n_isoc_dro,m),junk,&
+              logg_dro(z,n_isoc_dro,m),junk,junk,y_dro(z,n_isoc_dro,m),&
+              junk,z_dro(z,n_isoc_dro,m),junk,junk
          IF (stat.NE.0) GOTO 30
 
          IF (m.EQ.1) timestep_dro(z,n_isoc_dro) = droage

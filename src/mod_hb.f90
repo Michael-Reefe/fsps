@@ -1,5 +1,5 @@
 SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
-     wght,hb_wght,nmass,hbtime,macthb,loglhb,logthb,logghb,mchb, &
+     wght,hb_wght,nmass,hbtime,macthb,minihb,loglhb,logthb,logghb,mchb, &
      yhb,zhb,timehb)
 
   !routine to modify the horizontal branch to include bluer 
@@ -22,7 +22,7 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
   REAL(SP), INTENT(inout), DIMENSION(nt,nm) :: mini,mact,&
        logl,logt,logg,phase
   REAL(SP), INTENT(inout), DIMENSION(nt_dro,nm_dro) :: macthb,&
-       loglhb,logthb,logghb,mchb,yhb,zhb
+       minihb,loglhb,logthb,logghb,mchb,yhb,zhb
   REAL(SP), INTENT(inout), DIMENSION(nt_dro) :: timehb
   REAL(SP), INTENT(inout), DIMENSION(nm) :: wght
   REAL(SP), DIMENSION(nm) :: tphase=0.0
@@ -42,6 +42,9 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
 
   !---------------------------------------------------------------!
   !---------------------------------------------------------------!
+
+  mint = hbtime-0.025
+  maxt = hbtime+0.025
 
   hblum    = -999.
   flip     = 0
@@ -67,9 +70,6 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
      ENDDO
      i=1
   ENDIF
-
-  mint = 10**(hbtime-0.025) / 1E6
-  maxt = 10**(hbtime+0.025) / 1E6
 
   IF (isoc_type.EQ.'pdva') THEN
 
@@ -162,35 +162,29 @@ SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
          !We also need to be a bit careful because we can no longer have a direct relationship between the number of stars in the
          !default isochrones and those in the DRO3 isochrones.
 
+         ! DO j=2,nm
+         !    logt(t,j) = minteff                     ! this moves the original HB stars to the red cloud
+         ! ENDDO
+
          !loop through all of the indices on the new DRO3 isochrones
          nhbj=0
          DO jrel=1,nm_dro
             DO k=1,nt_dro
                !do not add a new HB star if the isochrones have no data for this j index
                IF (macthb(k,jrel).EQ.0.0) CYCLE
-               
-               mzams = macthb(k,jrel) + 0.2     ! estimate for the ZAMS mass (see the assumptions described above)
-               lzams = mzams**4                 ! main sequence mass-luminosity relation for stars with 0.43 < M/Msun < 2
-               !estimate the main sequence lifetime in Myr
-               azams = 0.1*(1-yhb(k,jrel)-zhb(k,jrel))*0.00685*(mzams*msun)*(clight/1E8)**2 / (lzams*lsun)
-               azams = azams / (3600.*24.*365.25*1e6)
-               azams = MAX(MIN(azams, 13700.), 3200.)
-               tnow = azams + timehb(k)
-
                !do not add a new HB star if time is not within this age bin
-               IF (tnow.LT.mint.OR.tnow.GT.maxt) CYCLE  
+               IF (timehb(k).LT.mint.OR.timehb(k).GT.maxt) CYCLE  
 
                !update number of stars in the isochrone
                nmass(t) = nmass(t)+1
                !add blue HB stars (their mass and Lbol are now linked to the DRO3 isochrones)
-               mini(t,nmass(t))  = mzams               ! estimate the initial mass using the prescription described above
+               mini(t,nmass(t))  = minihb(k,jrel)      ! estimate the initial mass using the prescription described above
                mact(t,nmass(t))  = macthb(k,jrel)      ! take actual mass directly from the DRO3 isochrones
                logl(t,nmass(t))  = loglhb(k,jrel)      ! do the same for logL
                logt(t,nmass(t))  = logthb(k,jrel)      ! and for logTeff
                logg(t,nmass(t))  = logghb(k,jrel)      ! and for logg
                phase(t,nmass(t)) = 8.0                 ! FSPS default
-               !logt(t,j) = minteff                 ! this moves the original HB star to the red cloud; probably should be commented out so we dont affect the original HB stars in the new prescription
-               nhbj = nhbj + 1                      ! keep track of how many new stars have been added
+               nhbj = nhbj + 1                         ! keep track of how many new stars have been added
 
                !find the weight of the closest existing mass bin (as the bins are meant to represent the entire range between -deltaM to +deltaM)
                !this will only be used to consider the *relative* weighting of these stars with respect to each other; the *absolute* scale will

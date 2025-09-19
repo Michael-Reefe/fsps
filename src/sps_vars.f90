@@ -280,8 +280,8 @@ MODULE SPS_VARS
 
   !DRO3 isochrone parameters (used in conjunction with the standard isochrones)
   REAL(SP), PARAMETER :: zsol_dro=0.0169
-  INTEGER, PARAMETER :: nt_dro=234
-  INTEGER, PARAMETER :: nm_dro=136
+  INTEGER, PARAMETER :: nt_dro=16
+  INTEGER, PARAMETER :: nm_dro=500
   INTEGER, PARAMETER :: nz_dro=8
 
   !flag indicating type of spectral library to use
@@ -624,8 +624,8 @@ MODULE SPS_VARS
        logt_isoc=0.,logg_isoc=0.,ffco_isoc=0.,phase_isoc=0.,&
        mini_isoc=0.,lmdot_isoc=0.
   !arrays for the DRO3 isochrone data
-  REAL(SP), DIMENSION(nz_dro,nt_dro,nm_dro) :: mact_dro=0.,logl_dro=0.,&
-       logt_dro=0.,logg_dro=0.,mc_dro=0.,y_dro=0.,z_dro=0.
+  REAL(SP), DIMENSION(nz_dro,nt_dro,nm_dro) :: mact_dro=0.,mini_dro=0.,&
+       logl_dro=0.,logt_dro=0.,logg_dro=0.,mc_dro=0.,y_dro=0.,z_dro=0.
 
   !arrays holding the number of mass elements for each isochrone,
   !the age of each isochrone, and the metallicity of each isochrone

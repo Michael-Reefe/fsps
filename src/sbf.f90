@@ -17,7 +17,7 @@ SUBROUTINE SBF(pset,outfile)
   REAL(SP), DIMENSION(nbands) :: mags
   REAL(SP), DIMENSION(nm)     :: wght
   REAL(SP), DIMENSION(nt,nm)  :: mini,mact,logl,logt,logg,ffco,phase,lmdot
-  REAL(SP), DIMENSION(nt_dro,nm_dro) :: macthb,loglhb,logthb,logghb,mchb,yhb,zhb
+  REAL(SP), DIMENSION(nt_dro,nm_dro) :: macthb,minihb,loglhb,logthb,logghb,mchb,yhb,zhb
   INTEGER, DIMENSION(nt)      :: nmass
   REAL(SP), DIMENSION(nt)     :: time
   REAL(SP), DIMENSION(nt_dro) :: timehb
@@ -53,6 +53,7 @@ SUBROUTINE SBF(pset,outfile)
 
   !do the same for the DRO3 isochrones
   macthb = mact_dro(pset%bhbcomp,:,:)   ! actual (present) mass
+  minihb = mini_dro(pset%bhbcomp,:,:)   ! initial mass
   loglhb = logl_dro(pset%bhbcomp,:,:)   ! log(Lbol)
   logthb = logt_dro(pset%bhbcomp,:,:)   ! log(Teff)
   logghb = logg_dro(pset%bhbcomp,:,:)   ! log(g)
@@ -70,7 +71,7 @@ SUBROUTINE SBF(pset,outfile)
      !need the hb weight for the blue stragglers too
      IF (pset%fbhb.GT.0.0.OR.pset%sbss.GT.1E-3) &
           CALL MOD_HB(pset%fbhb,i,mini,mact,logl,logt,logg,phase,&
-          wght,hb_wght,nmass,time(i),macthb,loglhb,logthb,logghb,mchb,&
+          wght,hb_wght,nmass,time(i),macthb,minihb,loglhb,logthb,logghb,mchb,&
           yhb,zhb,timehb)
 
      !add in blue stragglers

@@ -19,7 +19,7 @@ SUBROUTINE WRITE_ISOCHRONE(outfile,pset)
   !temp arrays for the isochrone data
   REAL(SP), DIMENSION(nt,nm)  :: mini,mact,logl,logt,logg,&
        ffco,phase,lmdot
-  REAL(SP), DIMENSION(nt_dro,nm_dro) :: macthb,loglhb,logthb,logghb,mchb,yhb,zhb
+  REAL(SP), DIMENSION(nt_dro,nm_dro) :: macthb,minihb,loglhb,logthb,logghb,mchb,yhb,zhb
   INTEGER, DIMENSION(nt)      :: nmass
 
   !---------------------------------------------------------------!
@@ -51,6 +51,7 @@ SUBROUTINE WRITE_ISOCHRONE(outfile,pset)
 
   !do the same for the DRO3 isochrones
   macthb = mact_dro(bb,:,:)   ! actual (present) mass
+  minihb = mini_dro(bb,:,:)   ! initial mass
   loglhb = logl_dro(bb,:,:)   ! log(Lbol)
   logthb = logt_dro(bb,:,:)   ! log(Teff)
   logghb = logg_dro(bb,:,:)   ! log(g)
@@ -67,8 +68,8 @@ SUBROUTINE WRITE_ISOCHRONE(outfile,pset)
      !need the hb weight for the blue stragglers too
      IF (pset%fbhb.GT.0.0.OR.pset%sbss.GT.1E-3) &
           CALL MOD_HB(pset%fbhb,tt,mini,mact,logl,logt,logg,phase,&
-          wght,hb_wght,nmass,timestep_isoc(zz,tt),macthb,loglhb,logthb,&
-          logghb,mchb,yhb,zhb,timestep_dro(bb,tt))
+          wght,hb_wght,nmass,timestep_isoc(zz,tt),macthb,minihb,&
+          loglhb,logthb,logghb,mchb,yhb,zhb,timestep_dro(bb,:))
 
      !add in blue stragglers
      IF (timestep_isoc(zz,tt).GE.bhb_sbs_time.AND.pset%sbss.GT.1E-3) &

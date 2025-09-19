@@ -280,13 +280,13 @@ MODULE SPS_UTILS
 
   INTERFACE
      SUBROUTINE MOD_HB(f_bhb,t,mini,mact,logl,logt,logg,phase, &
-          wght,hb_wght,nmass,hbtime,macthb,loglhb,logthb,logghb,mchb, &
-          yhb,zhb,timehb)
+          wght,hb_wght,nmass,hbtime,macthb,minihb,loglhb,logthb,&
+          logghb,mchb,yhb,zhb,timehb)
        USE sps_vars
        REAL(SP), INTENT(inout), DIMENSION(nt,nm) :: mini,mact,&
             logl,logt,logg,phase
        REAL(SP), INTENT(inout), DIMENSION(nt_dro,nm_dro) :: macthb,&
-            loglhb,logthb,logghb,mchb,yhb,zhb
+            minihb,loglhb,logthb,logghb,mchb,yhb,zhb
        REAL(SP), INTENT(inout), DIMENSION(nt_dro) :: timehb
        REAL(SP), INTENT(inout), DIMENSION(nm) :: wght
        REAL(SP), DIMENSION(nm) :: tphase=0.0
