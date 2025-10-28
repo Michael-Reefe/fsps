@@ -4,7 +4,6 @@
 .DS_Store
 nr
 SPECTRA/CKC14/*
-SPECTRA/Hot_spectra/Brown1996/*
 OUTPUTS/*
 CodeToDo.txt
 runsps.f90
