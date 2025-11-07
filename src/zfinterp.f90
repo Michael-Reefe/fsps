@@ -196,6 +196,7 @@ SUBROUTINE ZFINTERP2D(fbhbpos,sbsspos,dellpos,deltpos,spec,lbol,mass)
    ! do the n-dimensional interpolation over 5 axes
    mass = 0.
    lbol = 0.
+   spec = 0.
    DO fbhbi=fbhblo,fbhblo+1
       ! weight for fbhb axis
       w1 = merge(1.-dfbhb, dfbhb, fbhbi==fbhblo)
