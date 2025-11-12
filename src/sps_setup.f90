@@ -47,11 +47,20 @@ SUBROUTINE SPS_SETUP(zin)
   REAL(SP), DIMENSION(nagndust_spec)           :: agndust_lam=0.
   REAL(SP), DIMENSION(nagndust_spec,nagndust)  :: agndust_specinit=0.
   !REAL(KIND(1.0)), DIMENSION(nspec,nzinit,ndim_logt,ndim_logg) :: speclibinit=0.
+
   REAL(KIND(1.0)), allocatable :: speclibinit(:,:,:,:)
   REAL(SP), DIMENSION(nspec,nzwmb,ndim_wmb_logt,ndim_wmb_logg) :: wmbsi=0.
   REAL(SP), DIMENSION(nzwmb)     :: zwmb=0.
   REAL(SP), DIMENSION(nspec_wmb) :: wmb_lam=0.
   REAL(SP), DIMENSION(nspec_wmb,ndim_wmb_logt,ndim_wmb_logg) :: wmb_specinit=0.
+  REAL(SP), DIMENSION(nspec,nzwmb2,ndim_wmb_logt2,ndim_wmb_logg2) :: wmbsi2=0.
+  REAL(SP), DIMENSION(nzwmb2)     :: zwmb2=0.
+  REAL(SP), DIMENSION(nspec_wmb2) :: wmb_lam2=0.
+  REAL(SP), DIMENSION(nspec_wmb2,ndim_wmb_logt2,ndim_wmb_logg2) :: wmb_specinit2=0.
+  REAL(SP), DIMENSION(nspec,nzwmb3,ndim_wmb_logt3,ndim_wmb_logg3) :: wmbsi3=0.
+  REAL(SP), DIMENSION(nzwmb3)     :: zwmb3=0.
+  REAL(SP), DIMENSION(nspec_wmb3) :: wmb_lam3=0.
+  REAL(SP), DIMENSION(nspec_wmb3,ndim_wmb_logt3,ndim_wmb_logg3) :: wmb_specinit3=0.
   REAL(SP), DIMENSION(ntabmax)   :: lsflam=0.,lsfsig=0.
   REAL(SP), DIMENSION(30) :: g03lam=0., g03smc=0.
   REAL(SP), DIMENSION(nspec_xrb) :: tspec_xrb
@@ -130,6 +139,9 @@ SUBROUTINE SPS_SETUP(zin)
           '.dat',STATUS='OLD',iostat=stat,ACTION='READ')
   ELSE IF (isoc_type.EQ.'gnva') THEN
      OPEN(90,FILE=TRIM(SPS_HOME)//'/ISOCHRONES/Geneva/zlegend'//&
+          '.dat',STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE IF (isoc_type.EQ.'gnvr') THEN 
+     OPEN(90,FILE=TRIM(SPS_HOME)//'/ISOCHRONES/Geneva_rot/zlegend'//&
           '.dat',STATUS='OLD',iostat=stat,ACTION='READ')
   ENDIF
   IF (stat.NE.0) THEN
@@ -367,6 +379,11 @@ SUBROUTINE SPS_SETUP(zin)
          STATUS='OLD',iostat=stat1,ACTION='READ')
    OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996.logg',&
          STATUS='OLD',iostat=stat2,ACTION='READ')
+  ELSE IF (hot_spec_type.EQ.'leitherer') THEN 
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010.teff',&
+         STATUS='OLD',iostat=stat1,ACTION='READ')
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010.logg',&
+         STATUS='OLD',iostat=stat2,ACTION='READ')
   ENDIF
   IF (stat1.NE.0.OR.stat2.NE.0) THEN
      WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.teff or *.logg file cannot be opened'
@@ -381,6 +398,42 @@ SUBROUTINE SPS_SETUP(zin)
   CLOSE(93)
   CLOSE(94)
 
+  IF (hot_spec_type.EQ.'brown') THEN 
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010.teff',&
+         STATUS='OLD',iostat=stat1,ACTION='READ')
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010.logg',&
+         STATUS='OLD',iostat=stat2,ACTION='READ')
+   IF (stat1.NE.0.OR.stat2.NE.0) THEN
+     WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.teff or *.logg file cannot be opened'
+     STOP
+   ENDIF
+   DO i=1,ndim_wmb_logt2
+      READ(93,*) wmb_logt2(i)
+   ENDDO
+   DO i=1,ndim_wmb_logg2
+      READ(94,*) wmb_logg2(i)
+   ENDDO  
+   CLOSE(93)
+   CLOSE(94)
+
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR.teff',&
+         STATUS='OLD',iostat=stat1,ACTION='READ')
+   OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR.logg',&
+         STATUS='OLD',iostat=stat2,ACTION='READ')
+   IF (stat1.NE.0.OR.stat2.NE.0) THEN
+     WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.teff or *.logg file cannot be opened'
+     STOP
+   ENDIF
+   DO i=1,ndim_wmb_logt3
+      READ(93,*) wmb_logt3(i)
+   ENDDO
+   DO i=1,ndim_wmb_logg3
+      READ(94,*) wmb_logg3(i)
+   ENDDO  
+   CLOSE(93)
+   CLOSE(94)
+  END IF
+
   IF (hot_spec_type.EQ.'wmbasic') THEN
    OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/WMBASIC_zlegend.dat',&
          STATUS='OLD',iostat=stat,ACTION='READ')
@@ -392,6 +445,9 @@ SUBROUTINE SPS_SETUP(zin)
          STATUS='OLD',iostat=stat,ACTION='READ')
   ELSE IF (hot_spec_type.EQ.'brown') THEN
    OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996_zlegend.dat',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+  ELSE IF (hot_spec_type.EQ.'leitherer') THEN
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010_zlegend.dat',&
          STATUS='OLD',iostat=stat,ACTION='READ')
   ENDIF
 
@@ -411,6 +467,9 @@ SUBROUTINE SPS_SETUP(zin)
             zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
      ELSE IF (hot_spec_type.EQ.'brown') THEN
       OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Brown1996/Brown1996z'//&
+            zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+     ELSE IF (hot_spec_type.EQ.'leitherer') THEN
+      OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010z'//&
             zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
      ENDIF
      IF (stat.NE.0) THEN
@@ -456,6 +515,115 @@ SUBROUTINE SPS_SETUP(zin)
      wmb_spec(:,z,:,:) = 10**wmb_spec(:,z,:,:)
 
   ENDDO
+
+  IF (hot_spec_type.EQ.'brown') THEN
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010_zlegend.dat',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+
+   DO z=1,nzwmb2
+
+      READ(93,*) zwmb2(z)
+      WRITE(zstype,'(F6.4)') zwmb2(z)
+      OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010z'//&
+            zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+      IF (stat.NE.0) THEN
+         WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.spec cannot be opened'
+         STOP
+      ENDIF
+      DO i=1,nspec_wmb2
+         READ(95,*) wmb_lam2(i), (wmb_specinit2(i,:,j), j=1,ndim_wmb_logg2)
+      ENDDO
+      CLOSE(95)
+
+      !interpolate to the main spectral grid
+      !NB: should be smoothing the models first to the resolution of the
+      !input spectral grid
+      DO i=1,ndim_wmb_logt2
+         DO j=1,ndim_wmb_logg2
+            wmbsi2(:,z,i,j) = MAX(linterparr(wmb_lam2,wmb_specinit2(:,i,j),&
+                  spec_lambda),tiny_number)
+         ENDDO
+      ENDDO
+
+   ENDDO
+
+   CLOSE(93)
+
+   ALLOCATE(wmb_spec2(nspec,nz,ndim_wmb_logt2,ndim_wmb_logg2))
+   wmb_spec2 = 0.0
+
+   !Now interpolate the input spectral library to the isochrone grid
+   !notice that we're interpolating at fixed Z/Zsol even in cases
+   !where the isochrones and spectra might have different Zsol. This might
+   !in fact be the best thing to do.  Either way, its not ideal.
+   DO z=1,nz
+
+      i1 = MIN(MAX(locate(LOG10(zwmb2/zsol_spec),&
+            LOG10(zlegend(z)/zsol)),1),nzwmb2-1)
+      dz = (LOG10(zlegend(z)/zsol)-LOG10(zwmb2(i1)/zsol_spec)) / &
+            (LOG10(zwmb2(i1+1)/zsol_spec)-LOG10(zwmb2(i1)/zsol_spec))
+      dz = MIN(MAX(dz,0.0),1.0) !no extrapolation!
+
+      wmb_spec2(:,z,:,:) = (1-dz)*LOG10(wmbsi2(:,i1,:,:)+tiny_number) + &
+            dz*LOG10(wmbsi2(:,i1+1,:,:)+tiny_number)
+      wmb_spec2(:,z,:,:) = 10**wmb_spec2(:,z,:,:)
+
+   ENDDO
+
+   OPEN(93,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR_zlegend.dat',&
+         STATUS='OLD',iostat=stat,ACTION='READ')
+
+   DO z=1,nzwmb3
+
+      READ(93,*) zwmb3(z)
+      WRITE(zstype,'(F6.4)') zwmb3(z)
+      OPEN(95,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR/PoWR_z'//&
+            zstype//'.spec',STATUS='OLD',iostat=stat,ACTION='READ')
+      IF (stat.NE.0) THEN
+         WRITE(*,*) 'SPS_SETUP ERROR: /Hot_spectra/*.spec cannot be opened'
+         STOP
+      ENDIF
+      DO i=1,nspec_wmb3
+         READ(95,*) wmb_lam3(i), (wmb_specinit3(i,:,j), j=1,ndim_wmb_logg3)
+      ENDDO
+      CLOSE(95)
+
+      !interpolate to the main spectral grid
+      !NB: should be smoothing the models first to the resolution of the
+      !input spectral grid
+      DO i=1,ndim_wmb_logt3
+         DO j=1,ndim_wmb_logg3
+            wmbsi3(:,z,i,j) = MAX(linterparr(wmb_lam3,wmb_specinit3(:,i,j),&
+                  spec_lambda),tiny_number)
+         ENDDO
+      ENDDO
+
+   ENDDO
+
+   CLOSE(93)
+
+   ALLOCATE(wmb_spec3(nspec,nz,ndim_wmb_logt3,ndim_wmb_logg3))
+   wmb_spec3 = 0.0
+
+   !Now interpolate the input spectral library to the isochrone grid
+   !notice that we're interpolating at fixed Z/Zsol even in cases
+   !where the isochrones and spectra might have different Zsol. This might
+   !in fact be the best thing to do.  Either way, its not ideal.
+   DO z=1,nz
+
+      i1 = MIN(MAX(locate(LOG10(zwmb3/zsol_spec),&
+            LOG10(zlegend(z)/zsol)),1),nzwmb3-1)
+      dz = (LOG10(zlegend(z)/zsol)-LOG10(zwmb3(i1)/zsol_spec)) / &
+            (LOG10(zwmb3(i1+1)/zsol_spec)-LOG10(zwmb3(i1)/zsol_spec))
+      dz = MIN(MAX(dz,0.0),1.0) !no extrapolation!
+
+      wmb_spec3(:,z,:,:) = (1-dz)*LOG10(wmbsi3(:,i1,:,:)+tiny_number) + &
+            dz*LOG10(wmbsi3(:,i1+1,:,:)+tiny_number)
+      wmb_spec3(:,z,:,:) = 10**wmb_spec3(:,z,:,:)
+
+   ENDDO
+
+  END IF
 
   !-----------Read in TP-AGB Library from Lancon & Wood------------;
 
@@ -685,7 +853,7 @@ SUBROUTINE SPS_SETUP(zin)
   !--------------read in WR spectra from Smith et al.--------------;
 
   !read in WR-N Teff array
-  IF (hot_spec_type.EQ.'powr') THEN
+  IF (hot_spec_type.EQ.'powr'.OR.hot_spec_type.EQ.'brown') THEN
    OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR_WN/PoWR_WN.teff',&
          STATUS='OLD',iostat=stat,ACTION='READ')
   ELSE
@@ -702,7 +870,7 @@ SUBROUTINE SPS_SETUP(zin)
   CLOSE(94)
 
   !read in WR-C Teff array
-  IF (hot_spec_type.EQ.'powr') THEN
+  IF (hot_spec_type.EQ.'powr'.OR.hot_spec_type.EQ.'brown') THEN
    OPEN(94,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR_WC/PoWR_WC.teff',&
          STATUS='OLD',iostat=stat,ACTION='READ')
   ELSE
@@ -719,7 +887,7 @@ SUBROUTINE SPS_SETUP(zin)
   CLOSE(94)
 
   !read in WR-N spectra
-  IF (hot_spec_type.EQ.'powr') THEN
+  IF (hot_spec_type.EQ.'powr'.OR.hot_spec_type.EQ.'brown') THEN
    OPEN(97,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR_WN/PoWR_WN_Zall'//&
          '.spec',STATUS='OLD',iostat=stat,ACTION='READ')
   ELSE
@@ -758,7 +926,7 @@ SUBROUTINE SPS_SETUP(zin)
   ENDDO
 
   !read in WR-C spectra
-  IF (hot_spec_type.EQ.'powr') THEN
+  IF (hot_spec_type.EQ.'powr'.OR.hot_spec_type.EQ.'brown') THEN
    OPEN(97,FILE=TRIM(SPS_HOME)//'/SPECTRA/Hot_spectra/PoWR_WC/PoWR_WC_Zall'//&
          '.spec',STATUS='OLD',iostat=stat,ACTION='READ')
   ELSE
@@ -826,6 +994,10 @@ SUBROUTINE SPS_SETUP(zin)
      IF (isoc_type.EQ.'gnva') OPEN(97,FILE=TRIM(SPS_HOME)//&
           '/ISOCHRONES/Geneva/isoc_z'//zstype//'.dat',STATUS='OLD',&
           IOSTAT=stat,ACTION='READ')
+     !open Geneva isochrones with rotation
+     IF (isoc_type.EQ.'gnvr') OPEN(97,FILE=TRIM(SPS_HOME)//&
+         '/ISOCHRONES/Geneva_rot/isoc_z'//zstype//'.dat',STATUS='OLD',&
+         IOSTAT=stat,ACTION='READ')
 
      IF (stat.NE.0) THEN
         WRITE(*,*) 'SPS_SETUP ERROR: isochrone files cannot be opened'
@@ -886,6 +1058,8 @@ SUBROUTINE SPS_SETUP(zin)
   !see imf_weight.f90 for details
   IF (isoc_type.EQ.'gnva') THEN
      imf_lower_bound = MINVAL(mini_isoc(zmin,1,1:nmass_isoc(zmin,1)))*0.99
+  ELSE IF (isoc_type.EQ.'gnvr') THEN 
+     imf_lower_bound = 0.80
   ELSE
      imf_lower_bound = imf_lower_limit
   ENDIF

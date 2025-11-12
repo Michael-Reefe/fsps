@@ -15,8 +15,9 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
   TYPE(PARAMS), INTENT(in) :: pset
   REAL(SP), INTENT(inout), DIMENSION(nspec) :: spec  
   REAL(SP), DIMENSION(nspec) :: ispec
-  REAL(SP) :: t,u,r2,test1,test2,test3,test4,loggi,teffi,rwr,twr,logt_cut
+  REAL(SP) :: t,u,r2,test1,test2,test3,test4,loggi,teffi,rwr,twr,logt_cut,logg_cut
   INTEGER  :: klo,jlo,mlo,flag
+  LOGICAL  :: brown_alt
 
   !---------------------------------------------------------------!
   !---------------------------------------------------------------!
@@ -25,6 +26,7 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
   ispec = tiny_number
   flag  = 0
   logt_cut = MAX(wmb_logt(1),logt_wmb_hot)
+  logg_cut = MAX(wmb_logg(1),logg_wmb_hot)
 
   !compute radius squared (cm^2) 
   !we need to re-compute logg becuase we modify the logt,logl of AGB stars
@@ -231,55 +233,154 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
 
   !use WMBasic grid from JJ Eldridge for T>25,000K MS stars
   !--> use Brown 1996 grid for T>10,000K MS stars, modified HB and BS stars, and for PAGB stars (in place of the Rauch 2003 grid)
-  ELSE IF ((phase.EQ.0.0.AND.logt.GT.logt_cut)&
+  ELSE IF ((phase.EQ.0.0.AND.logt.GE.logt_cut.AND.loggi.GE.logg_cut)&
      .OR.(phase.EQ.6.0.AND.logt.GT.4.699.AND.hot_spec_type.EQ.'brown')&
      .OR.(phase.EQ.7.0.AND.logt.GT.logt_cut.AND.hot_spec_type.EQ.'brown')&
      .OR.(phase.EQ.8.0.AND.logt.GT.logt_cut.AND.hot_spec_type.EQ.'brown')) THEN
 
-     flag = flag+1
+     ! --- First, try to grab a spectrum from the wmb_spec2 grid (Leitherer2010) ---
+     brown_alt = hot_spec_type.EQ.'brown'
+     IF (brown_alt) THEN
+          flag = flag+1
 
-     jlo = MIN(MAX(locate(wmb_logt,logt),1),ndim_wmb_logt-1)
-     klo = MIN(MAX(locate(wmb_logg,loggi),1),ndim_wmb_logg-1)
-     t   = (logt-wmb_logt(jlo)) / (wmb_logt(jlo+1)-wmb_logt(jlo))
-     t   = MIN(MAX(t,0.0),1.0) !no extrapolation (this means >50K -> 50K)
-     u   = (loggi-wmb_logg(klo)) / (wmb_logg(klo+1)-wmb_logg(klo))
-     u   = MIN(MAX(u,0.0),1.0) !no extrapolation in logg
+          jlo = MIN(MAX(locate(wmb_logt2,logt),1),ndim_wmb_logt2-1)
+          klo = MIN(MAX(locate(wmb_logg2,loggi),1),ndim_wmb_logg2-1)
+          t   = (logt-wmb_logt2(jlo)) / (wmb_logt2(jlo+1)-wmb_logt2(jlo))
+          t   = MIN(MAX(t,0.0),1.0) !no extrapolation (this means >50K -> 50K)
+          u   = (loggi-wmb_logg2(klo)) / (wmb_logg2(klo+1)-wmb_logg2(klo))
+          u   = MIN(MAX(u,0.0),1.0) !no extrapolation in logg
 
-     test1 = wmb_spec(whlam5000,pset%zmet,jlo,klo)
-     test2 = wmb_spec(whlam5000,pset%zmet,jlo+1,klo)
-     test3 = wmb_spec(whlam5000,pset%zmet,jlo,klo+1)
-     test4 = wmb_spec(whlam5000,pset%zmet,jlo+1,klo+1)
+          test1 = wmb_spec2(whlam5000,pset%zmet,jlo,klo)
+          test2 = wmb_spec2(whlam5000,pset%zmet,jlo+1,klo)
+          test3 = wmb_spec2(whlam5000,pset%zmet,jlo,klo+1)
+          test4 = wmb_spec2(whlam5000,pset%zmet,jlo+1,klo+1)
 
-     !if all four components are zero, set the flag to zero
-     IF ((test1.LE.tiny30.AND.test2.LE.tiny30.AND.&
-          test3.LE.tiny30.AND.test4.LE.tiny30)) flag=0
+          !if all four components are zero, set the flag to zero
+          IF ((test1.LE.tiny30.AND.test2.LE.tiny30.AND.&
+               test3.LE.tiny30.AND.test4.LE.tiny30)) flag=0
 
-     !catch stars that fall off part of the grid
-     !the flux at 5000A should never be zero unless a spec is missing
-     IF ((test1.LE.tiny30.OR.test2.LE.tiny30.OR.&
-          test3.LE.tiny30.OR.test4.LE.tiny30).AND.flag.EQ.1) THEN
+          !catch stars that fall off part of the grid
+          !the flux at 5000A should never be zero unless a spec is missing
+          IF ((test1.LE.tiny30.OR.test2.LE.tiny30.OR.&
+               test3.LE.tiny30.OR.test4.LE.tiny30).AND.flag.EQ.1) THEN
 
-        IF (verbose.EQ.99) & 
-             WRITE(*,'(" GETSPEC WARNING: Part of the '//&
-             'point is off the grid: Z=",I2,'//&
-             '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
-             pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
+               IF (verbose.EQ.99) & 
+                    WRITE(*,'(" GETSPEC WARNING: Part of the '//&
+                    'point is off the grid: Z=",I2,'//&
+                    '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
+                    pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
 
-        !this is a very crude hack.  just pick one of the spectra
-        IF (test1.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo)
-        IF (test2.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo)
-        IF (test3.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo+1)
-        IF (test4.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo+1)
+               !this is a very crude hack.  just pick one of the spectra
+               IF (test1.GT.tiny30) spec = wmb_spec2(:,pset%zmet,jlo,klo)
+               IF (test2.GT.tiny30) spec = wmb_spec2(:,pset%zmet,jlo+1,klo)
+               IF (test3.GT.tiny30) spec = wmb_spec2(:,pset%zmet,jlo,klo+1)
+               IF (test4.GT.tiny30) spec = wmb_spec2(:,pset%zmet,jlo+1,klo+1)
 
-     ELSE
+          ELSE
 
-      spec = (1-t)*(1-u)*wmb_spec(:,pset%zmet,jlo,klo) + &
-            t*(1-u)*wmb_spec(:,pset%zmet,jlo+1,klo) + &
-            t*u*wmb_spec(:,pset%zmet,jlo+1,klo+1) + &
-            (1-t)*u*wmb_spec(:,pset%zmet,jlo,klo+1)
+               spec = (1-t)*(1-u)*wmb_spec2(:,pset%zmet,jlo,klo) + &
+                         t*(1-u)*wmb_spec2(:,pset%zmet,jlo+1,klo) + &
+                         t*u*wmb_spec2(:,pset%zmet,jlo+1,klo+1) + &
+                         (1-t)*u*wmb_spec2(:,pset%zmet,jlo,klo+1)
+          
+          END IF
+     END IF
 
-     ENDIF
-   
+     ! --- Second, if that didn't work, try to grab a spectrum from the wmb_spec3 grid (PoWR) ---
+     IF (brown_alt.AND.(flag.EQ.0)) THEN
+          flag = flag+1
+
+          jlo = MIN(MAX(locate(wmb_logt3,logt),1),ndim_wmb_logt3-1)
+          klo = MIN(MAX(locate(wmb_logg3,loggi),1),ndim_wmb_logg3-1)
+          t   = (logt-wmb_logt3(jlo)) / (wmb_logt3(jlo+1)-wmb_logt3(jlo))
+          t   = MIN(MAX(t,0.0),1.0) !no extrapolation (this means >50K -> 50K)
+          u   = (loggi-wmb_logg3(klo)) / (wmb_logg3(klo+1)-wmb_logg3(klo))
+          u   = MIN(MAX(u,0.0),1.0) !no extrapolation in logg
+
+          test1 = wmb_spec3(whlam5000,pset%zmet,jlo,klo)
+          test2 = wmb_spec3(whlam5000,pset%zmet,jlo+1,klo)
+          test3 = wmb_spec3(whlam5000,pset%zmet,jlo,klo+1)
+          test4 = wmb_spec3(whlam5000,pset%zmet,jlo+1,klo+1)
+
+          !if all four components are zero, set the flag to zero
+          IF ((test1.LE.tiny30.AND.test2.LE.tiny30.AND.&
+               test3.LE.tiny30.AND.test4.LE.tiny30)) flag=0
+
+          !catch stars that fall off part of the grid
+          !the flux at 5000A should never be zero unless a spec is missing
+          IF ((test1.LE.tiny30.OR.test2.LE.tiny30.OR.&
+               test3.LE.tiny30.OR.test4.LE.tiny30).AND.flag.EQ.1) THEN
+
+               IF (verbose.EQ.99) & 
+                    WRITE(*,'(" GETSPEC WARNING: Part of the '//&
+                    'point is off the grid: Z=",I2,'//&
+                    '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
+                    pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
+
+               !this is a very crude hack.  just pick one of the spectra
+               IF (test1.GT.tiny30) spec = wmb_spec3(:,pset%zmet,jlo,klo)
+               IF (test2.GT.tiny30) spec = wmb_spec3(:,pset%zmet,jlo+1,klo)
+               IF (test3.GT.tiny30) spec = wmb_spec3(:,pset%zmet,jlo,klo+1)
+               IF (test4.GT.tiny30) spec = wmb_spec3(:,pset%zmet,jlo+1,klo+1)
+
+          ELSE
+
+               spec = (1-t)*(1-u)*wmb_spec3(:,pset%zmet,jlo,klo) + &
+                         t*(1-u)*wmb_spec3(:,pset%zmet,jlo+1,klo) + &
+                         t*u*wmb_spec3(:,pset%zmet,jlo+1,klo+1) + &
+                         (1-t)*u*wmb_spec3(:,pset%zmet,jlo,klo+1)
+          
+          END IF
+     END IF
+
+     ! --- If that still returned no spectra, fall back to the wmb_spec grid (Brown1996) ---
+     IF (flag.EQ.0) THEN 
+          flag = flag+1
+
+          jlo = MIN(MAX(locate(wmb_logt,logt),1),ndim_wmb_logt-1)
+          klo = MIN(MAX(locate(wmb_logg,loggi),1),ndim_wmb_logg-1)
+          t   = (logt-wmb_logt(jlo)) / (wmb_logt(jlo+1)-wmb_logt(jlo))
+          t   = MIN(MAX(t,0.0),1.0) !no extrapolation (this means >50K -> 50K)
+          u   = (loggi-wmb_logg(klo)) / (wmb_logg(klo+1)-wmb_logg(klo))
+          u   = MIN(MAX(u,0.0),1.0) !no extrapolation in logg
+
+          test1 = wmb_spec(whlam5000,pset%zmet,jlo,klo)
+          test2 = wmb_spec(whlam5000,pset%zmet,jlo+1,klo)
+          test3 = wmb_spec(whlam5000,pset%zmet,jlo,klo+1)
+          test4 = wmb_spec(whlam5000,pset%zmet,jlo+1,klo+1)
+
+          !if all four components are zero, set the flag to zero
+          IF ((test1.LE.tiny30.AND.test2.LE.tiny30.AND.&
+               test3.LE.tiny30.AND.test4.LE.tiny30)) flag=0
+
+          !catch stars that fall off part of the grid
+          !the flux at 5000A should never be zero unless a spec is missing
+          IF ((test1.LE.tiny30.OR.test2.LE.tiny30.OR.&
+               test3.LE.tiny30.OR.test4.LE.tiny30).AND.flag.EQ.1) THEN
+
+               IF (verbose.EQ.99) & 
+                    WRITE(*,'(" GETSPEC WARNING: Part of the '//&
+                    'point is off the grid: Z=",I2,'//&
+                    '" logT=",F5.2," logg=",F5.2," phase=",I2," lg IMF*L=",F5.2)') &
+                    pset%zmet,logt,loggi,INT(phase),LOG10(wght*lbol)
+
+               !this is a very crude hack.  just pick one of the spectra
+               IF (test1.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo)
+               IF (test2.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo)
+               IF (test3.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo,klo+1)
+               IF (test4.GT.tiny30) spec = wmb_spec(:,pset%zmet,jlo+1,klo+1)
+
+          ELSE
+
+               spec = (1-t)*(1-u)*wmb_spec(:,pset%zmet,jlo,klo) + &
+                    t*(1-u)*wmb_spec(:,pset%zmet,jlo+1,klo) + &
+                    t*u*wmb_spec(:,pset%zmet,jlo+1,klo+1) + &
+                    (1-t)*u*wmb_spec(:,pset%zmet,jlo,klo+1)
+
+          ENDIF
+
+     END IF
+
      !all hot spectra libraries are normalized to unity
      spec = spec*lbol
 

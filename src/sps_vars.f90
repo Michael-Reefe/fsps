@@ -38,9 +38,15 @@ MODULE SPS_VARS
 #define POWR 0
 #endif
 
-!Thomas Brown et al. 1996 models
+!Thomas Brown et al. 1996 models (TLUSTY)
+! + Claus Leitherer et al. 2010 models (WM-Basic)
 #ifndef BROWN
 #define BROWN 1
+#endif
+
+!Claus Leitherer et al. 2010 models (WM-Basic)
+#ifndef LEITH
+#define LEITH 0
 #endif
 
 !enables marginalizing over the logg axis of the
@@ -69,6 +75,10 @@ MODULE SPS_VARS
 
 #ifndef GENEVA
 #define GENEVA 0
+#endif
+
+#ifndef GENEVAR
+#define GENEVAR 0
 #endif
 
 !note that in the case of BPASS the SSPs are already pre-computed
@@ -152,6 +162,7 @@ MODULE SPS_VARS
   !Use Eldridge 2017 WMBasic library for stars hotter than 25,000 K
   !or this value, whichever is larger
   real(SP) :: logt_wmb_hot = 0.0
+  real(SP) :: logg_wmb_hot = -3.0
 
   !turn on/off a Cloudy-based nebular emission model (cont+lines)
   !if set to 2, then the nebular emission lines are added at the SSP
@@ -256,6 +267,11 @@ MODULE SPS_VARS
   CHARACTER(4), PARAMETER :: isoc_type = 'gnva'
   INTEGER, PARAMETER :: nt=51
   INTEGER, PARAMETER :: nz=5
+#elif (GENEVAR)
+  REAL(SP), PARAMETER :: zsol = 0.0140
+  CHARACTER(4), PARAMETER :: isoc_type = 'gnvr'
+  INTEGER, PARAMETER :: nt=85
+  INTEGER, PARAMETER :: nz=4
 #elif (MIST)
   REAL(SP), PARAMETER :: zsol = 0.0142
   CHARACTER(4), PARAMETER :: isoc_type = 'mist'
@@ -346,7 +362,9 @@ MODULE SPS_VARS
 #endif
   !number of WR spectra
 #if (POWR)
-  INTEGER, PARAMETER :: ndim_wr=17, nlamwr=5547, nzwr=4
+  INTEGER, PARAMETER :: ndim_wr=14, nlamwr=5547, nzwr=4
+#elif (BROWN)
+  INTEGER, PARAMETER :: ndim_wr=14, nlamwr=5547, nzwr=4
 #else
   INTEGER, PARAMETER :: ndim_wr=12, nlamwr=1963, nzwr=5
 #endif
@@ -368,7 +386,23 @@ MODULE SPS_VARS
   INTEGER, PARAMETER :: ndim_wmb_logt=47,ndim_wmb_logg=27
   INTEGER, PARAMETER :: nzwmb=3, nspec_wmb=5547
   CHARACTER(5), PARAMETER :: hot_spec_type = 'brown'
+#elif (LEITH)
+  INTEGER, PARAMETER :: ndim_wmb_logt=20,ndim_wmb_logg=8
+  INTEGER, PARAMETER :: nzwmb=5, nspec_wmb=5547
+  CHARACTER(9), PARAMETER :: hot_spec_type = 'leitherer'
 #endif 
+
+#if (BROWN)
+  INTEGER, PARAMETER :: ndim_wmb_logt2=20,ndim_wmb_logg2=8
+  INTEGER, PARAMETER :: nzwmb2=5, nspec_wmb2=5547
+  INTEGER, PARAMETER :: ndim_wmb_logt3=42,ndim_wmb_logg3=12
+  INTEGER, PARAMETER :: nzwmb3=4, nspec_wmb3=5547
+#else
+  INTEGER, PARAMETER :: ndim_wmb_logt2=0,ndim_wmb_logg2=0
+  INTEGER, PARAMETER :: nzwmb2=0, nspec_wmb2=0
+  INTEGER, PARAMETER :: ndim_wmb_logt3=0,ndim_wmb_logg3=0
+  INTEGER, PARAMETER :: nzwmb3=0, nspec_wmb3=0
+#endif
 
   !parameters for circumstellar dust models
   INTEGER, PARAMETER :: ntau_dagb=50, nteff_dagb=6
@@ -530,6 +564,16 @@ MODULE SPS_VARS
   REAL(SP), DIMENSION(ndim_wmb_logg) :: wmb_logg=0.
   ! REAL(KIND(1.0)), DIMENSION(nspec,nz,ndim_wmb_logt,ndim_wmb_logg) :: wmb_spec=0.
   REAL(KIND(1.0)), ALLOCATABLE :: wmb_spec(:,:,:,:)
+
+  REAL(SP), DIMENSION(ndim_wmb_logt2) :: wmb_logt2=0.
+  REAL(SP), DIMENSION(ndim_wmb_logg2) :: wmb_logg2=0.
+  ! REAL(KIND(1.0)), DIMENSION(nspec,nz,ndim_wmb_logt,ndim_wmb_logg) :: wmb_spec=0.
+  REAL(KIND(1.0)), ALLOCATABLE :: wmb_spec2(:,:,:,:)
+
+  REAL(SP), DIMENSION(ndim_wmb_logt3) :: wmb_logt3=0.
+  REAL(SP), DIMENSION(ndim_wmb_logg3) :: wmb_logg3=0.
+  ! REAL(KIND(1.0)), DIMENSION(nspec,nz,ndim_wmb_logt,ndim_wmb_logg) :: wmb_spec=0.
+  REAL(KIND(1.0)), ALLOCATABLE :: wmb_spec3(:,:,:,:)
 
   !AGB library (Lancon & Mouhcine 2002)
   ! REAL(SP), DIMENSION(nspec,n_agb_o) :: agb_spec_o=0.
