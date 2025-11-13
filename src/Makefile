@@ -65,6 +65,9 @@ extract :
 	fi && \
 	if ls ../SPECTRA/Hot_spectra/Brown1996/Brown1996z*.spec.gz &> /dev/null; then \
 		gunzip ../SPECTRA/Hot_spectra/Brown1996/Brown1996z*.spec.gz;              \
+	fi && \
+	if ls ../SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010z*.spec.gz &> /dev/null; then \
+		gunzip ../SPECTRA/Hot_spectra/Leitherer2010/Leitherer2010z*.spec.gz;               \
 	fi
 
 autosps : autosps.o $(COMMON)

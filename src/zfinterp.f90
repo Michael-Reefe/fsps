@@ -153,3 +153,72 @@ SUBROUTINE ZFINTERP(zpos,fbhbpos,sbsspos,dellpos,deltpos,spec,lbol,mass,tpos)
   ENDIF
 
 END SUBROUTINE ZFINTERP
+
+
+SUBROUTINE ZFINTERP2D(fbhbpos,sbsspos,dellpos,deltpos,spec,lbol,mass)
+
+  !Linearly interpolate a grid of SSPs over 
+  ! fbhb (fbhbpos)
+  ! sbss (sbsspos)
+  ! dell (dellpos)
+  ! delt (deltpos)
+
+  USE sps_vars
+  USE sps_utils, ONLY : locate, tsum, ndinterpolate
+  IMPLICIT NONE
+
+  REAL(SP),INTENT(in) :: fbhbpos, sbsspos, dellpos, deltpos 
+  REAL(SP),INTENT(inout),DIMENSION(:,:) :: mass, lbol 
+  REAL(SP),INTENT(inout),DIMENSION(:,:,:) :: spec
+
+  INTEGER  :: fbhblo,sbsslo,delllo,deltlo
+  INTEGER  :: fbhbi,sbssi,delli,delti
+  REAL(SP) :: dfbhb,dsbss,ddell,ddelt,wght,w1,w2,w3,w4
+
+  !------------------------------------------------------------!
+
+   ! 1) fbhb index & differential
+   fbhblo = MAX(MIN(locate(fbhb_legend,fbhbpos),nfbhb-1),1)
+   dfbhb  = (fbhbpos - fbhb_legend(fbhblo)) / (fbhb_legend(fbhblo+1) - fbhb_legend(fbhblo))
+
+   ! 2) sbss index & differential
+   sbsslo = MAX(MIN(locate(sbss_legend,sbsspos),nsbss-1),1)
+   dsbss  = (sbsspos - sbss_legend(sbsslo)) / (sbss_legend(sbsslo+1) - sbss_legend(sbsslo))
+
+   ! 3) dell index & differential
+   delllo = MAX(MIN(locate(dell_legend,dellpos),ndell-1),1)
+   ddell  = (dellpos - dell_legend(delllo)) / (dell_legend(delllo+1) - dell_legend(delllo))
+
+   ! 4) dell index & differential
+   deltlo = MAX(MIN(locate(delt_legend,deltpos),ndelt-1),1)
+   ddelt  = (deltpos - delt_legend(deltlo)) / (delt_legend(deltlo+1) - delt_legend(deltlo))
+
+   ! do the n-dimensional interpolation over 5 axes
+   mass = 0.
+   lbol = 0.
+   spec = 0.
+   DO fbhbi=fbhblo,fbhblo+1
+      ! weight for fbhb axis
+      w1 = merge(1.-dfbhb, dfbhb, fbhbi==fbhblo)
+      DO sbssi=sbsslo,sbsslo+1
+         ! weight for sbss axis
+         w2 = merge(1.-dsbss, dsbss, sbssi==sbsslo)
+         DO delli=delllo,delllo+1
+            ! weight for dell axis
+            w3 = merge(1.-ddell, ddell, delli==delllo)
+            DO delti=deltlo,deltlo+1
+               ! weight for delt axis
+               w4 = merge(1.-ddelt, ddelt, delti==deltlo)
+               ! overall weight
+               wght = w1*w2*w3*w4
+               ! add the contribution from this point, multiplied by the weight
+               mass(:,:) = mass(:,:) + wght * mass_ssp_itp(:, :, fbhbi, sbssi, delli, delti)
+               lbol(:,:) = lbol(:,:) + wght * lbol_ssp_itp(:, :, fbhbi, sbssi, delli, delti)
+               spec(:,:,:) = spec(:,:,:) + wght * spec_ssp_itp(:, :, :, fbhbi, sbssi, delli, delti)
+            ENDDO
+         ENDDO
+      ENDDO
+   ENDDO
+
+END SUBROUTINE ZFINTERP2D
+

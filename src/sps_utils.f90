@@ -395,6 +395,15 @@ MODULE SPS_UTILS
   END INTERFACE
 
   INTERFACE 
+     SUBROUTINE ZFINTERP2D(fbhbpos,sbsspos,dellpos,deltpos,spec,lbol,mass)
+       USE sps_vars
+       REAL(SP),INTENT(in) :: fbhbpos, sbsspos, dellpos, deltpos 
+       REAL(SP),INTENT(inout),DIMENSION(:,:) :: mass, lbol 
+       REAL(SP),INTENT(inout),DIMENSION(:,:,:) :: spec
+     END SUBROUTINE ZFINTERP2D
+  END INTERFACE
+
+  INTERFACE 
     FUNCTION NDINTERPOLATE(ndim,x,ng,grid,values)
       !Multilinear interpolation in ndim dimensions
       USE sps_vars
