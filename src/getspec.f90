@@ -239,7 +239,7 @@ SUBROUTINE GETSPEC(pset,mact,logt,lbol,logg,phase,ffco,lmdot,wght,spec)
      .OR.(phase.EQ.8.0.AND.logt.GT.logt_cut.AND.hot_spec_type.EQ.'brown')) THEN
 
      ! --- First, try to grab a spectrum from the wmb_spec2 grid (Leitherer2010) ---
-     brown_alt = hot_spec_type.EQ.'brown'
+     brown_alt = (hot_spec_type.EQ.'brown').AND.((phase.EQ.0.0).OR.(phase.EQ.7.0))
      IF (brown_alt) THEN
           flag = flag+1
 
